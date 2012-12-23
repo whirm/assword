@@ -1,0 +1,166 @@
+#!/usr/bin/env python
+
+import os
+import tarfile
+import urwid
+import subprocess
+import sys
+
+############################################################
+
+class Entry():
+    def __init__(self, root, index):
+        self.root = root
+        self.index = index
+
+    def _getPath(self):
+        return os.path.join(self.root, self.index)
+
+    def getContext(self):
+        cpath = os.path.join(self._getPath(), 'context')
+        with open(cpath, 'r') as f:
+            context = f.read()
+        return context
+
+    def getPassword(self):
+        ppath = os.path.join(self._getPath(), 'pass')
+        with open(ppath, 'r') as f:
+            password = f.read()
+        return password
+
+class Entries():
+    def __init__(self, root, dirs):
+        self.root = root
+        self.dirs = dirs
+        self.index = -1
+        self.max = len(dirs)
+
+    def __iter__(self):
+        return self
+
+    def __len__(self):
+        return self.max
+
+    def next(self):
+        self.index = self.index + 1
+        if self.index == self.max:
+            raise StopIteration
+        m = self.dirs[self.index]
+        entry = Entry(self.root, m)
+        return entry
+
+class Database():
+    def __init__(self, root):
+        self.root = root
+
+    def entries(self):
+        for root, dirs, files in os.walk(self.root):
+            break
+        return Entries(self.root, dirs)
+
+    def search(self, query):
+        mset = []
+        for entry in self.entries():
+            context = entry.getContext()
+            if query in context:
+                mset.append(entry)
+        return mset
+
+############################################################
+
+class ListItem(urwid.WidgetWrap):
+
+    def __init__(self, entry):
+        self.entry = entry
+
+        w = urwid.AttrMap(
+            urwid.Text('%s: %s' % (self.entry.index, self.entry.getContext())),
+            'body', 'focus')
+        self.__super.__init__(w)
+
+    def selectable(self):
+        return True
+
+    def keypress(self, size, key):
+        return key
+
+def select(mset):
+
+    palette = [
+        ('body','dark cyan', '', 'standout'),
+        ('focus','dark red', 'dark cyan', 'standout'),
+        ('head','light red', 'black'),
+        ]
+
+    def keypress (input):
+        global selected
+        if input in ('q', 'Q'):
+            raise urwid.ExitMainLoop()
+        if input in ('n'):
+            focus, pos = listbox.get_focus()
+            if not focus: return
+            listbox.set_focus(pos + 1)
+        if input in ('p'):
+            focus, pos = listbox.get_focus()
+            if not focus: return
+            if pos == 0: return
+            listbox.set_focus(pos - 1)
+        if input is 'enter':
+            focus = listbox.get_focus()[0]
+            selected = focus.entry
+            raise urwid.ExitMainLoop()
+
+    global selected
+    selected = None
+
+    items = []
+    for entry in mset:
+        items.append(ListItem(entry))
+
+    listbox = urwid.ListBox(urwid.SimpleListWalker(items))
+    view = urwid.Frame(urwid.AttrWrap(listbox, 'body'))
+    loop = urwid.MainLoop(
+        view,
+        palette,
+        unhandled_input=keypress,
+        handle_mouse=False,
+        )
+    loop.run()
+    return selected
+
+############################################################
+
+def xclip(text):
+    sin = subprocess.PIPE
+    p = subprocess.Popen(' '.join(["xclip", "-i"]),
+                         shell=True,
+                         stdin=sin)
+    p.communicate(text)
+
+############################################################
+
+def search(query):
+    db = Database(DB)
+    results = db.search(query)
+    if not results:
+        print >>sys.stderr, "No results found."
+        sys.exit(1)
+    elif len(results) == 1:
+        result = results[0]
+    else:
+        result = select(results)
+
+    xclip(result.getPassword())
+    print >>sys.stderr, "Password copied to clipboard."
+    sys.exit()
+
+############################################################
+
+# (cd  && tar czv .) | gpg --encrypt >gpass.tgz.gpg
+# gpg --decrypt <~/.gpass/gpass.tgz.gpg | tar xz
+
+DB = '/home/jrollins/.gpass/mnt'
+
+query = sys.argv[1]
+
+search(query)
