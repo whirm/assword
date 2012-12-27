@@ -1,75 +1,16 @@
 #!/usr/bin/env python
 
 import os
-import tarfile
 import urwid
 import subprocess
 import sys
+import getpass
 
-############################################################
-
-class Entry():
-    def __init__(self, root, index):
-        self.root = root
-        self.index = index
-
-    def _getPath(self):
-        return os.path.join(self.root, self.index)
-
-    def getContext(self):
-        cpath = os.path.join(self._getPath(), 'context')
-        with open(cpath, 'r') as f:
-            context = f.read()
-        return context
-
-    def getPassword(self):
-        ppath = os.path.join(self._getPath(), 'pass')
-        with open(ppath, 'r') as f:
-            password = f.read()
-        return password
-
-class Entries():
-    def __init__(self, root, dirs):
-        self.root = root
-        self.dirs = dirs
-        self.index = -1
-        self.max = len(dirs)
-
-    def __iter__(self):
-        return self
-
-    def __len__(self):
-        return self.max
-
-    def next(self):
-        self.index = self.index + 1
-        if self.index == self.max:
-            raise StopIteration
-        m = self.dirs[self.index]
-        entry = Entry(self.root, m)
-        return entry
-
-class Database():
-    def __init__(self, root):
-        self.root = root
-
-    def entries(self):
-        for root, dirs, files in os.walk(self.root):
-            break
-        return Entries(self.root, dirs)
-
-    def search(self, query):
-        mset = []
-        for entry in self.entries():
-            context = entry.getContext()
-            if query in context:
-                mset.append(entry)
-        return mset
+import gpass
 
 ############################################################
 
 class ListItem(urwid.WidgetWrap):
-
     def __init__(self, entry):
         self.entry = entry
 
@@ -126,6 +67,7 @@ def select(mset):
         handle_mouse=False,
         )
     loop.run()
+
     return selected
 
 ############################################################
@@ -139,8 +81,20 @@ def xclip(text):
 
 ############################################################
 
+def usage():
+    print """Usage: gpass <cmd> [<args>]
+
+  search <string>
+  add
+"""
+
 def search(query):
-    db = Database(DB)
+    if not query:
+        try:
+            query = raw_input('search: ')
+        except KeyboardInterrupt:
+            sys.exit(-1)
+    db = gpass.Database(DB)
     results = db.search(query)
     if not results:
         print >>sys.stderr, "No results found."
@@ -148,19 +102,46 @@ def search(query):
     elif len(results) == 1:
         result = results[0]
     else:
-        result = select(results)
-
+        try:
+            result = select(results)
+        except KeyboardInterrupt:
+            sys.exit(-1)
+    if not result:
+        sys.exit(-1)
     xclip(result.getPassword())
+    print >>sys.stderr, "Context:", result.getContext()
     print >>sys.stderr, "Password copied to clipboard."
     sys.exit()
 
+def add():
+    try:
+        context = raw_input('context: ')
+        password = getpass.getpass('password: ')
+    except KeyboardInterrupt:
+        sys.exit(-1)
+    db = gpass.Database(DB, writable=True)
+    newindex = db.add(context, password)
+    db.save()
+    print >>sys.stderr, "Wrote new entry:", newindex
+
 ############################################################
 
-# (cd  && tar czv .) | gpg --encrypt >gpass.tgz.gpg
-# gpg --decrypt <~/.gpass/gpass.tgz.gpg | tar xz
+# (cd mnt && find . -mindepth 1 -maxdepth 1 -printf '%P\n' | tar cv -T -) | gpg --encrypt >gpass.tar.gpg
+# gpg --decrypt < gpass.tar.gpg | tar xz
+#DB = '/home/jrollins/.gpass/gpass.tar'
+DB =  os.getenv('GPASS_DB', '/home/jrollins/.gpass.tar.gpg')
 
-DB = '/home/jrollins/.gpass/mnt'
+cmd = sys.argv[1]
 
-query = sys.argv[1]
-
-search(query)
+if cmd == 'search':
+    search(sys.argv[2:])
+elif cmd == 'add':
+    add()
+elif cmd == 'list':
+    db = Database(DB)
+    print db.entries()
+elif cmd == 'help':
+    usage()
+else:
+    print >>sys.stderr, "unknown command:", cmd
+    usage()
