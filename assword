@@ -1,21 +1,23 @@
 #!/usr/bin/env python
 
 import os
+import argparse
 import urwid
 import subprocess
 import sys
 import getpass
-
-import gpass
+import assword
+import json
 
 ############################################################
 
 class ListItem(urwid.WidgetWrap):
-    def __init__(self, entry):
+    def __init__(self, index, entry):
+        self.index = index
         self.entry = entry
 
         w = urwid.AttrMap(
-            urwid.Text('%s: %s' % (self.entry.index, self.entry.getContext())),
+            urwid.Text('%s: %s' % (self.index, self.entry['context'])),
             'body', 'focus')
         self.__super.__init__(w)
 
@@ -55,8 +57,8 @@ def select(mset):
     selected = None
 
     items = []
-    for entry in mset:
-        items.append(ListItem(entry))
+    for index, entry in sorted(mset.iteritems()):
+        items.append(ListItem(index, entry))
 
     listbox = urwid.ListBox(urwid.SimpleListWalker(items))
     view = urwid.Frame(urwid.AttrWrap(listbox, 'body'))
@@ -72,35 +74,48 @@ def select(mset):
 
 ############################################################
 
-def xclip(text):
-    sin = subprocess.PIPE
-    p = subprocess.Popen(' '.join(["xclip", "-i"]),
+def pwgen():
+    #p = subprocess.Popen(' '.join(["pwgen", "-s", "10", "1"]),
+    p = subprocess.Popen(' '.join(["gpg", "-a", "--gen-random", "1", "12"]),
                          shell=True,
-                         stdin=sin)
+                         stdout=subprocess.PIPE)
+    ret = p.communicate()
+    return ret[0].strip()
+
+def xclip(text):
+    p = subprocess.Popen(' '.join(["xclip", "-i", "-selection", "primary"]),
+                         shell=True,
+                         stdin=subprocess.PIPE)
     p.communicate(text)
 
 ############################################################
 
 def usage():
-    print """Usage: gpass <cmd> [<args>]
+    prog = os.path.basename(sys.argv[0])
+    print "Usage:", prog, "<command> [<args>...]"
+    print """
+commands:
 
-  search <string>
-  add
+  search <string>               search the database for string
+  add [<context> [<password>]   add a new entry
+  dump                          plaintext dump of password database (as json)
+  help                          this help
 """
 
 def search(query):
     if not query:
         try:
             query = raw_input('search: ')
+            query = query.split()
         except KeyboardInterrupt:
             sys.exit(-1)
-    db = gpass.Database(DB)
+    db = assword.Database(DB, KEY)
     results = db.search(query)
     if not results:
         print >>sys.stderr, "No results found."
-        sys.exit(1)
+        sys.exit(2)
     elif len(results) == 1:
-        result = results[0]
+        result = results.values()[0]
     else:
         try:
             result = select(results)
@@ -108,40 +123,51 @@ def search(query):
             sys.exit(-1)
     if not result:
         sys.exit(-1)
-    xclip(result.getPassword())
-    print >>sys.stderr, "Context:", result.getContext()
+    xclip(result['password'])
+    print >>sys.stderr, "Context:", result['context']
     print >>sys.stderr, "Password copied to clipboard."
     sys.exit()
 
-def add():
+def add(args):
     try:
+        context = args[0]
+    except IndexError:
         context = raw_input('context: ')
+    except KeyboardInterrupt:
+        sys.exit(-1)
+    try:
+        password = args[1]
+    except IndexError:
         password = getpass.getpass('password: ')
     except KeyboardInterrupt:
         sys.exit(-1)
-    db = gpass.Database(DB, writable=True)
-    newindex = db.add(context, password)
+    db = assword.Database(DB, KEY)
+    newindex = db.add(context=context,
+                      password=password)
     db.save()
     print >>sys.stderr, "Wrote new entry:", newindex
 
 ############################################################
 
-# (cd mnt && find . -mindepth 1 -maxdepth 1 -printf '%P\n' | tar cv -T -) | gpg --encrypt >gpass.tar.gpg
-# gpg --decrypt < gpass.tar.gpg | tar xz
-#DB = '/home/jrollins/.gpass/gpass.tar'
-DB =  os.getenv('GPASS_DB', '/home/jrollins/.gpass.tar.gpg')
+DB =  os.getenv('ASSWORD_DB', os.path.join(os.path.expanduser('~'),'.assword.gpg'))
+KEY = os.getenv('PGPID')
+
+if len(sys.argv) < 2:
+    usage()
+    sys.exit(1)
 
 cmd = sys.argv[1]
 
 if cmd == 'search':
     search(sys.argv[2:])
 elif cmd == 'add':
-    add()
-elif cmd == 'list':
-    db = Database(DB)
-    print db.entries()
+    add(sys.argv[2:])
+elif cmd == 'dump':
+    db = assword.Database(DB, KEY)
+    print json.dumps(db.entries, sort_keys=True, indent=2)
 elif cmd == 'help':
     usage()
 else:
-    print >>sys.stderr, "unknown command:", cmd
+    print >>sys.stderr, "Unknown command:", cmd
+    print >>sys.stderr
     usage()
