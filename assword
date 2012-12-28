@@ -142,6 +142,8 @@ def search(query):
 def add(args):
     try:
         context = args[0]
+        if context == '-':
+            context = sys.stdin.read()
     except IndexError:
         context = raw_input('context: ')
     except KeyboardInterrupt:
