@@ -123,6 +123,34 @@ def password_prompt():
     except KeyboardInterrupt:
         sys.exit(-1)
 
+def add(args):
+    # get context
+    try:
+        # as argument
+        context = args[0]
+        # or stdin
+        if context == '-':
+            context = sys.stdin.read()
+    # or prompt
+    except IndexError:
+        context = raw_input('context: ')
+    except KeyboardInterrupt:
+        sys.exit(-1)
+    # get password
+    # from prompt if specified
+    if os.getenv('ASSWORD_PASSWORD') == 'prompt':
+        password = password_prompt()
+    # otherwise auto generate
+    else:
+        print >>sys.stderr, "Auto-generating password... ",
+        password = pwgen()
+        print >>sys.stderr, "done."
+    print password
+    db = assword.Database(DB, KEY)
+    newindex = db.add(context, password)
+    db.save()
+    print >>sys.stderr, "Wrote new entry:", newindex
+
 def search(query):
     if not query:
         try:
@@ -148,31 +176,6 @@ def search(query):
     print >>sys.stderr, "Context:", result['context']
     print >>sys.stderr, "Password copied to clipboard."
     sys.exit()
-
-def add(args):
-    try:
-        context = args[0]
-        if context == '-':
-            context = sys.stdin.read()
-    except IndexError:
-        context = raw_input('context: ')
-    except KeyboardInterrupt:
-        sys.exit(-1)
-    try:
-        password = args[1]
-    except IndexError:
-        password0 = getpass.getpass('password: ')
-        password1 = getpass.getpass('reenter password: ')
-        if password0 != password1:
-            print >>sys.stderr, "Error: Passwords do not match.  Aborting."
-            sys.exit(3)
-        password = password0
-    except KeyboardInterrupt:
-        sys.exit(-1)
-    db = assword.Database(DB, KEY)
-    newindex = db.add(context, password)
-    db.save()
-    print >>sys.stderr, "Wrote new entry:", newindex
 
 ############################################################
 
