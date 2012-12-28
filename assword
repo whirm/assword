@@ -112,6 +112,17 @@ def check_key():
         print >>sys.stderr, "Error: OpenPGP key id not specified in PGPID env var."
         sys.exit(2)
 
+def password_prompt():
+    try:
+        password0 = getpass.getpass('password: ')
+        password1 = getpass.getpass('reenter password: ')
+        if password0 != password1:
+            print >>sys.stderr, "Error: Passwords do not match.  Aborting."
+            sys.exit(3)
+        return password0
+    except KeyboardInterrupt:
+        sys.exit(-1)
+
 def search(query):
     if not query:
         try:
