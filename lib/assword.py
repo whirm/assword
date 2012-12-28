@@ -2,6 +2,7 @@ import os
 import io
 import gpgme
 import json
+import time
 
 class DatabaseSignatureError():
     def __init__(self, sigs):
@@ -62,6 +63,7 @@ class Database():
         self.entries[newindex] = {}
         self.entries[newindex]['context'] = context
         self.entries[newindex]['password'] = password
+        self.entries[newindex]['date'] = int(time.time())
         return newindex
 
     def save(self):
