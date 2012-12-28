@@ -1,14 +1,34 @@
 #!/usr/bin/env python
 
 import os
-import argparse
 import urwid
 import subprocess
 import sys
 import getpass
-import assword
 import json
 import base64
+import assword
+
+############################################################
+
+def usage():
+    prog = os.path.basename(sys.argv[0])
+    print "Usage:", prog, "<command> [<args>...]"
+    print """
+commands:
+
+  search <string>   Search the database for string.
+  add [<context>]   Add a new entry.  If context is '-' read from stdin.
+  dump              Plaintext dump of password database (as formatted json).
+  help              This help.
+
+environment:
+
+  PGPID             OpenPGP key id of database encryption recipient.  Must be set.
+  ASSWORD_DB        Path to assword database file (~/.assword.gpg by default).
+  ASSWORD_PASSWORD  Length in bytes (18 by default), or prompt if 'prompt'.
+
+"""
 
 ############################################################
 
@@ -88,24 +108,6 @@ def xclip(text):
     p.communicate(text)
 
 ############################################################
-
-def usage():
-    prog = os.path.basename(sys.argv[0])
-    print "Usage:", prog, "<command> [<args>...]"
-    print """
-commands:
-
-  search <string>               search the database for string
-  add [<context> [<password>]]  add a new entry
-  dump                          plaintext dump of password database (as json)
-  help                          this help
-
-environment:
-
-  ASSWORD_DB   path to assword database file (~/.assword.gpg by default)
-  PGPID        OpenPGP key id of database encryption recipient
-
-"""
 
 def check_key():
     if not KEY:
