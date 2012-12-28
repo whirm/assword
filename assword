@@ -153,8 +153,7 @@ def add(args):
     except KeyboardInterrupt:
         sys.exit(-1)
     db = assword.Database(DB, KEY)
-    newindex = db.add(context=context,
-                      password=password)
+    newindex = db.add(context, password)
     db.save()
     print >>sys.stderr, "Wrote new entry:", newindex
 

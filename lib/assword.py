@@ -56,14 +56,12 @@ class Database():
         if not indicies: indicies = [-1]
         return str(max(indicies) + 1)
 
-    def add(self, context=None, info=None, password=None, secrets=None):
+    def add(self, context=None, password=None):
         """Add a new entry to the database."""
         newindex = self._newindex()
         self.entries[newindex] = {}
         self.entries[newindex]['context'] = context
-        self.entries[newindex]['info'] = info
         self.entries[newindex]['password'] = password
-        self.entries[newindex]['secrets'] = secrets
         return newindex
 
     def save(self):
@@ -82,9 +80,6 @@ class Database():
         for index, entry in self.entries.iteritems():
             if query:
                 if entry['context'] and query in entry['context']:
-                    mset[index] = entry
-                    continue
-                if entry['info'] and query in entry['info']:
                     mset[index] = entry
                     continue
             else:
