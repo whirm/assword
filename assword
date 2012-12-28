@@ -8,6 +8,7 @@ import sys
 import getpass
 import assword
 import json
+import base64
 
 ############################################################
 
@@ -75,12 +76,10 @@ def select(mset):
 ############################################################
 
 def pwgen():
-    #p = subprocess.Popen(' '.join(["pwgen", "-s", "10", "1"]),
-    p = subprocess.Popen(' '.join(["gpg", "-a", "--gen-random", "1", "12"]),
-                         shell=True,
-                         stdout=subprocess.PIPE)
-    ret = p.communicate()
-    return ret[0].strip()
+    # number of characters to read
+    n = int(os.getenv('ASSWORD_PASSWORD', 18))
+    s = os.urandom(n)
+    return base64.b64encode(s)
 
 def xclip(text):
     p = subprocess.Popen(' '.join(["xclip", "-i", "-selection", "primary"]),
