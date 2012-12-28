@@ -151,7 +151,12 @@ def add(args):
     try:
         password = args[1]
     except IndexError:
-        password = getpass.getpass('password: ')
+        password0 = getpass.getpass('password: ')
+        password1 = getpass.getpass('reenter password: ')
+        if password0 != password1:
+            print >>sys.stderr, "Error: Passwords do not match.  Aborting."
+            sys.exit(3)
+        password = password0
     except KeyboardInterrupt:
         sys.exit(-1)
     db = assword.Database(DB, KEY)
