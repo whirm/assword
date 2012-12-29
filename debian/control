@@ -1,0 +1,24 @@
+Source: assword
+Section: python
+Priority: optional
+Maintainer: Jameson Rollins <jrollins@finestructure.net>
+Build-Depends:
+ pkg-config,
+ python-all-dev (>= 2.6.6-3~),
+ python-setuptools,
+ debhelper (>= 8.0.0)
+Standards-Version: 3.9.3
+
+Package: assword
+Architecture: any
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
+ ${python:Depends},
+ python-gpgme,
+ python-cjson,
+ python-urwid,
+Description: Simple and secure password database and retrieval system.
+ Passwords and context strings are stored in a single OpenPGP
+ encrypted and signed file.  The contexts can be searched.  Passwords
+ are securely retrieved without displaying on the screen.
