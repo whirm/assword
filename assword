@@ -157,7 +157,6 @@ def search(query):
     if not query:
         try:
             query = raw_input('search: ')
-            query = query.split()
         except KeyboardInterrupt:
             sys.exit(-1)
     db = assword.Database(DB, KEY)
@@ -192,7 +191,7 @@ cmd = sys.argv[1]
 
 if cmd == 'search':
     check_key()
-    search(sys.argv[2:])
+    search(' '.join(sys.argv[2:]))
 elif cmd == 'add':
     check_key()
     add(sys.argv[2:])

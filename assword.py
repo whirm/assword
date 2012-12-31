@@ -77,7 +77,6 @@ class Database():
 
     def search(self, query=None):
         """Search the database entry 'context' and 'info' fields for string."""
-        query = ' '.join(query)
         mset = {}
         for index, entry in self.entries.iteritems():
             if query:
