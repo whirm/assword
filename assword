@@ -115,7 +115,7 @@ def pwgen():
     return base64.b64encode(s)
 
 def xclip(text):
-    p = subprocess.Popen(' '.join(["xclip", "-i", "-selection", "primary"]),
+    p = subprocess.Popen(' '.join(["xclip", "-i"]),
                          shell=True,
                          stdin=subprocess.PIPE)
     p.communicate(text)
