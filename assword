@@ -194,12 +194,12 @@ if len(sys.argv) < 2:
 
 cmd = sys.argv[1]
 
-if cmd == 'search':
-    check_key()
-    search(' '.join(sys.argv[2:]))
-elif cmd == 'add':
+if cmd == 'add':
     check_key()
     add(sys.argv[2:])
+elif cmd == 'search':
+    check_key()
+    search(' '.join(sys.argv[2:]))
 elif cmd == 'dump':
     check_key()
     dump(' '.join(sys.argv[2:]))
