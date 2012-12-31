@@ -51,7 +51,7 @@ class ListItem(urwid.WidgetWrap):
         self.entry = entry
 
         w = urwid.AttrMap(
-            urwid.Text('%s: %s' % (self.index, self.entry['context'])),
+            urwid.Text('%8s: %s' % (self.index, self.entry['context'])),
             'body', 'focus')
         self.__super.__init__(w)
 
