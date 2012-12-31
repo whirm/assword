@@ -57,7 +57,7 @@ class Database():
         if not indicies: indicies = [-1]
         return str(max(indicies) + 1)
 
-    def add(self, context=None, password=None):
+    def add(self, context, password):
         """Add a new entry to the database."""
         newindex = self._newindex()
         self.entries[newindex] = {}
