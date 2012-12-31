@@ -122,7 +122,7 @@ def xclip(text):
 
 def check_key():
     if not KEY:
-        print >>sys.stderr, "Error: OpenPGP key id not specified in PGPID env var."
+        print >>sys.stderr, "Error: OpenPGP key id not specified in PGPID environment variable."
         sys.exit(2)
 
 def password_prompt():
