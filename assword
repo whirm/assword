@@ -15,19 +15,32 @@ def usage():
     prog = os.path.basename(sys.argv[0])
     print "Usage:", prog, "<command> [<args>...]"
     print """
-commands:
+Commands:
 
-  search <string>   Search the database for string.
-  add [<context>]   Add a new entry.  If context is '-' read from stdin.
-  dump              Plaintext dump of password database (as formatted json).
-  help              This help.
+  add [<context>]    Add a new entry.  If context is '-' read from stdin.
+                     If not specified, user will be prompted for context.
+                     See ASSWORD_PASSWORD for information on password.
 
-environment:
+  search [<string>]  Search the database for string.  If string not specified
+                     user will be prompted.
 
-  PGPID             OpenPGP key id of database encryption recipient.  Must be set.
-  ASSWORD_DB        Path to assword database file (~/.assword.gpg by default).
-  ASSWORD_PASSWORD  Length in bytes (18 by default), or prompt if 'prompt'.
+  dump [<string>]    Dump search results as json.  If string not specified
+                     all entries are returned.
 
+  help               This help.
+
+The search string "id:<id>" can be used to retrieve a single entry by
+it's index.
+
+Environment:
+
+  PGPID             OpenPGP key id of database encryption recipient.
+                    This variable is required to be set.
+
+  ASSWORD_DB        Path to assword database file (default: ~/.assword.gpg).
+
+  ASSWORD_PASSWORD  Length of auto-generated password in bytes (default: 18).
+                    If set to 'prompt' user will be prompted for password.
 """
 
 ############################################################
