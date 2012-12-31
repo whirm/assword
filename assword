@@ -71,7 +71,7 @@ def select(mset):
             listbox.set_focus(pos - 1)
         if input is 'enter':
             focus = listbox.get_focus()[0]
-            selected = focus.entry
+            selected = {focus.index: focus.entry}
             raise urwid.ExitMainLoop()
 
     global selected
@@ -164,19 +164,19 @@ def search(query):
     if not results:
         print >>sys.stderr, "No results found."
         sys.exit(2)
-    elif len(results) == 1:
-        result = results.values()[0]
-    else:
+    if len(results) > 1:
         try:
-            result = select(results)
+            results = select(results)
         except KeyboardInterrupt:
             sys.exit(-1)
-    if not result:
+    if not results:
         sys.exit(-1)
-    xclip(result['password'])
-    print >>sys.stderr, "Context:", result['context']
+    index = results.keys()[0]
+    entry = results.values()[0]
+    xclip(entry['password'])
+    print >>sys.stderr, "Entry:", index
+    print >>sys.stderr, "Context:", entry['context']
     print >>sys.stderr, "Password copied to clipboard."
-    sys.exit()
 
 ############################################################
 
