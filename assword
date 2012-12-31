@@ -108,10 +108,8 @@ def select(mset):
 
 ############################################################
 
-def pwgen():
-    # number of characters to read
-    n = int(os.getenv('ASSWORD_PASSWORD', 18))
-    s = os.urandom(n)
+def pwgen(bytes):
+    s = os.urandom(bytes)
     return base64.b64encode(s)
 
 def xclip(text):
@@ -146,21 +144,20 @@ def add(args):
         # or stdin
         if context == '-':
             context = sys.stdin.read()
-    # or prompt
+    # or prompt if nothing specified
     except IndexError:
         context = raw_input('context: ')
     except KeyboardInterrupt:
         sys.exit(-1)
-    # get password
-    # from prompt if specified
+    # get password from prompt if specified
     if os.getenv('ASSWORD_PASSWORD') == 'prompt':
         password = password_prompt()
     # otherwise auto generate
     else:
-        print >>sys.stderr, "Auto-generating password... ",
-        password = pwgen()
+        print >>sys.stderr, "Auto-generating password...",
+        bytes = int(os.getenv('ASSWORD_PASSWORD', 18))
+        password = pwgen(bytes)
         print >>sys.stderr, "done."
-    print password
     db = assword.Database(DB, KEY)
     newindex = db.add(context, password)
     db.save()
