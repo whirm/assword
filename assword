@@ -178,6 +178,11 @@ def search(query):
     print >>sys.stderr, "Context:", entry['context']
     print >>sys.stderr, "Password copied to clipboard."
 
+def dump(query):
+    db = assword.Database(DB, KEY)
+    results = db.search(query)
+    print json.dumps(results, sort_keys=True, indent=2)
+
 ############################################################
 
 DB =  os.getenv('ASSWORD_DB', os.path.join(os.path.expanduser('~'),'.assword.gpg'))
@@ -197,8 +202,7 @@ elif cmd == 'add':
     add(sys.argv[2:])
 elif cmd == 'dump':
     check_key()
-    db = assword.Database(DB, KEY)
-    print json.dumps(db.entries, sort_keys=True, indent=2)
+    dump(' '.join(sys.argv[2:]))
 elif cmd == 'help':
     usage()
 else:
