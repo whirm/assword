@@ -52,9 +52,6 @@ DBPATH = os.getenv('ASSWORD_DB', os.path.join(ASSWORD_DIR, 'db'))
 
 ############################################################
 
-
-############################################################
-
 def pwgen(bytes):
     s = os.urandom(bytes)
     return base64.b64encode(s)
@@ -151,10 +148,12 @@ See 'assword help' for more information."""
             results[index]['password'] = ''
     print json.dumps(results, sort_keys=True, indent=2)
 
-############################################################
 
+############################################################
+# Basically main()
 
 if len(sys.argv) < 2:
+    print >>sys.stderr, "Command not specified."
     usage()
     sys.exit(1)
 
