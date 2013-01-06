@@ -9,6 +9,7 @@ import json
 import base64
 import gpgme
 import assword
+import xdo
 
 ############################################################
 
@@ -27,6 +28,15 @@ Commands:
 
   dump [<string>]    Dump search results as json.  If string not specified
                      all entries are returned.
+
+  xsearch [<string>] X search interface, good for X window manager integration.
+                     When launched, the window ID of the currently focused
+                     window is recorded.  If string is not specified a search
+                     prompt will be displayed.  If multiple results for query
+                     are available, a context selection list will be
+                     presented.  When a single result is available, the password
+                     of selected entry will be automatically typed into the
+                     initial window.
 
   help               This help.
 
@@ -148,6 +158,18 @@ See 'assword help' for more information."""
             results[index]['password'] = ''
     print json.dumps(results, sort_keys=True, indent=2)
 
+# The X GUI
+def xsearch(args):
+    query = ' '.join(args)
+    # initialize xdo
+    x = xdo.xdo()
+    # get the id of the currently focused window
+    win = x.window_get_focus()
+    # do it
+    result = assword.Xsearch(DBPATH, query=query).returnValue()
+    # type the password in the saved window
+    if result:
+        x.type(win, result['password'])
 
 ############################################################
 # Basically main()
@@ -163,6 +185,8 @@ if cmd == 'add':
     add(sys.argv[2:])
 elif cmd == 'dump':
     dump(sys.argv[2:])
+elif cmd == 'xsearch':
+    xsearch(sys.argv[2:])
 elif cmd == 'help':
     usage()
 else:
