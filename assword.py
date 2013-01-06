@@ -11,7 +11,7 @@ class DatabaseKeyError(Exception):
     def __str__(self):
         return repr(self.msg)
 
-class DatabaseSignatureError():
+class DatabaseSignatureError(Exception):
     def __init__(self, sigs, msg):
         self.sigs = sigs
         self.msg = msg
