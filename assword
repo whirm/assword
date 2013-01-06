@@ -13,21 +13,21 @@ import xdo
 
 ############################################################
 
+PROG = os.path.basename(sys.argv[0])
+
 def usage():
-    prog = os.path.basename(sys.argv[0])
-    print "Usage:", prog, "<command> [<args>...]"
+    print "Usage:", PROG, "<command> [<args>...]"
     print """
 Commands:
 
   add [<context>]    Add a new entry.  If context is '-' read from stdin.
                      If not specified, user will be prompted for context.
-                     See ASSWORD_PASSWORD for information on password.
+                     See ASSWORD_PASSWORD for information on passwords.
 
-  search [<string>]  Search the database for string.  If string not specified
-                     user will be prompted.
-
-  dump [<string>]    Dump search results as json.  If string not specified
-                     all entries are returned.
+  dump [<string>]    Dump search results as json.  If string not specified all
+                     entries are returned.  Passwords will not be displayed
+                     unless the ASSWORD_DUMP_PASSWORDS environment variable is
+                     set.
 
   xsearch [<string>] X search interface, good for X window manager integration.
                      When launched, the window ID of the currently focused
@@ -41,17 +41,19 @@ Commands:
   help               This help.
 
 The search string "id:<id>" can be used to retrieve a single entry by
-it's index.
+its index.
 
 Environment:
 
-  PGPID             OpenPGP key id of database encryption recipient.
-                    This variable is required to be set.
+  ASSWORD_DB        Path to assword database file (default: ~/.assword/db).
 
-  ASSWORD_DB        Path to assword database file (default: ~/.assword.gpg).
+  ASSWORD_KEYID     OpenPGP key ID of database encryption recipient.
+                    If set to path, key ID will be read from file
+                    (default: ~/.assword/keyid).
 
-  ASSWORD_PASSWORD  Length of auto-generated password in bytes (default: 18).
-                    If set to 'prompt' user will be prompted for password.
+  ASSWORD_PASSWORD  For new entries, length of auto-generated password in
+                    bytes (default: 18).  If set to 'prompt' user will be
+                    prompted for password.
 """
 
 ############################################################
