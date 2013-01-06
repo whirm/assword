@@ -21,15 +21,15 @@ class DatabaseSignatureError(Exception):
 class Database():
     """An Assword database."""
 
-    def __init__(self, path, keyid=None):
-        self.path = path
+    def __init__(self, dbpath=None, keyid=None):
+        self.dbpath = dbpath
         self.keyid = keyid
 
         self.gpg = gpgme.Context()
         self.gpg.armor = True
 
-        if os.path.exists(self.path):
-            cleardata = self._decryptDB(self.path)
+        if self.dbpath and os.path.exists(self.dbpath):
+            cleardata = self._decryptDB(self.dbpath)
             self.entries = json.loads(cleardata.getvalue())
         else:
             self.entries = {}
