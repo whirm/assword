@@ -8,6 +8,7 @@ import base64
 import gpgme
 import assword
 import xdo
+import subprocess
 
 ############################################################
 
@@ -28,13 +29,11 @@ Commands:
                      set.
 
   xsearch [<string>] X search interface, good for X window manager integration.
-                     When launched, the window ID of the currently focused
-                     window is recorded.  If string is not specified a search
-                     prompt will be displayed.  If multiple results for query
-                     are available, a context selection list will be
-                     presented.  When a single result is available, the password
-                     of selected entry will be automatically typed into the
-                     initial window.
+                     If string is not specified a search prompt will be
+                     displayed.  If multiple results for query are available a
+                     context selection list will be presented.  When a single
+                     result is available, the password will be retrieved
+                     according to the ASSWORD_XPASTE method.
 
   help               This help.
 
@@ -52,6 +51,11 @@ Environment:
   ASSWORD_PASSWORD  For new entries, length of auto-generated password in
                     bytes (default: 18).  If set to 'prompt' user will be
                     prompted for password.
+
+  ASSWORD_XPASTE    Method for password retrieval.  Options are: 'xdo'
+                    (default) which attempts to type the password into the
+                    window that had focus on launch, or 'xclip' which inserts
+                    the password in the X clipboard.
 """
 
 ############################################################
@@ -65,6 +69,12 @@ DBPATH = os.getenv('ASSWORD_DB', os.path.join(ASSWORD_DIR, 'db'))
 def pwgen(bytes):
     s = os.urandom(bytes)
     return base64.b64encode(s)
+
+def xclip(text):
+    p = subprocess.Popen(' '.join(["xclip", "-i"]),
+                         shell=True,
+                         stdin=subprocess.PIPE)
+    p.communicate(text)
 
 ############################################################
 
@@ -161,17 +171,26 @@ See 'assword help' for more information."""
     print json.dumps(results, sort_keys=True, indent=2)
 
 # The X GUI
-def xsearch(args):
+def xsearch(args, method='xdo'):
     query = ' '.join(args)
-    # initialize xdo
-    x = xdo.xdo()
-    # get the id of the currently focused window
-    win = x.window_get_focus()
+    if method == 'xdo':
+        # initialize xdo
+        x = xdo.xdo()
+        # get the id of the currently focused window
+        win = x.window_get_focus()
+    elif method == 'xclip':
+        pass
+    else:
+        print >>sys.stderr, "Unknown X paste method:", method
+        sys.exit(4)
     # do it
     result = assword.Xsearch(DBPATH, query=query).returnValue()
     # type the password in the saved window
     if result:
-        x.type(win, result['password'])
+        if method == 'xdo':
+            x.type(win, result['password'])
+        elif method == 'xclip':
+            xclip(result['password'])
 
 ############################################################
 # Basically main()
@@ -188,7 +207,8 @@ if cmd == 'add':
 elif cmd == 'dump':
     dump(sys.argv[2:])
 elif cmd == 'xsearch':
-    xsearch(sys.argv[2:])
+    method = os.getenv('ASSWORD_XPASTE', 'xdo')
+    xsearch(sys.argv[2:], method=method)
 elif cmd == 'help':
     usage()
 else:
