@@ -7,6 +7,7 @@ import sys
 import getpass
 import json
 import base64
+import gpgme
 import assword
 
 ############################################################
@@ -45,6 +46,12 @@ Environment:
 
 ############################################################
 
+ASSWORD_DIR = os.path.join(os.path.expanduser('~'),'.assword')
+
+DBPATH = os.getenv('ASSWORD_DB', os.path.join(ASSWORD_DIR, 'db'))
+
+############################################################
+
 
 ############################################################
 
@@ -54,10 +61,42 @@ def pwgen(bytes):
 
 ############################################################
 
-def check_key():
-    if not KEY:
-        print >>sys.stderr, "Error: OpenPGP key id not specified in PGPID environment variable."
+def get_keyid():
+    keyid = os.getenv('ASSWORD_KEYID')
+    keyfile = os.path.join(ASSWORD_DIR, 'keyid')
+    if keyid and os.path.exists(keyid):
+        keyfile = keyid
+        keyid = None
+    if os.path.exists(keyfile):
+        with open(keyfile, 'r') as f:
+            keyid = f.read().strip()
+
+    save = False
+    if not keyid:
+        print >>sys.stderr, "OpenPGP key ID of encryption target not specified."
+        print >>sys.stderr, "Please provide key ID in ASSWORD_KEYID environment variable,"
+        print >>sys.stderr, "or specify key ID now to save in ~/.assword/keyid file."
+        keyid = raw_input('OpenPGP key ID: ')
+        if keyid == '':
+            keyid = None
+        else:
+            save = True
+
+    if not keyid:
         sys.exit(2)
+
+    try:
+        gpg = gpgme.Context()
+        gpg.get_key(keyid)
+    except gpgme.GpgmeError:
+        print >>sys.stderr, "Invalid key ID:", keyid
+        sys.exit(2)
+
+    if save:
+        with open(keyfile, 'w') as f:
+            f.write(keyid)
+
+    return keyid
 
 def password_prompt():
     try:
@@ -71,6 +110,7 @@ def password_prompt():
         sys.exit(-1)
 
 def add(args):
+    keyid = get_keyid()
     # get context
     try:
         # as argument
@@ -92,13 +132,14 @@ def add(args):
         bytes = int(os.getenv('ASSWORD_PASSWORD', 18))
         password = pwgen(bytes)
         print >>sys.stderr, "done."
-    db = assword.Database(DB, KEY)
+    db = assword.Database(DBPATH, keyid)
     newindex = db.add(context, password)
     db.save()
     print >>sys.stderr, "Wrote new entry:", newindex
 
-def dump(query):
-    db = assword.Database(DB, KEY)
+def dump(args):
+    query = ' '.join(args)
+    db = assword.Database(DBPATH)
     results = db.search(query)
     print json.dumps(results, sort_keys=True, indent=2)
 
@@ -114,11 +155,9 @@ if len(sys.argv) < 2:
 cmd = sys.argv[1]
 
 if cmd == 'add':
-    check_key()
     add(sys.argv[2:])
 elif cmd == 'dump':
-    check_key()
-    dump(' '.join(sys.argv[2:]))
+    dump(sys.argv[2:])
 elif cmd == 'help':
     usage()
 else:
