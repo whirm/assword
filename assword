@@ -1,110 +1,64 @@
 #!/usr/bin/env python
 
 import os
-import urwid
-import subprocess
 import sys
 import getpass
 import json
 import base64
+import gpgme
 import assword
+import xdo
 
 ############################################################
 
+PROG = os.path.basename(sys.argv[0])
+
 def usage():
-    prog = os.path.basename(sys.argv[0])
-    print "Usage:", prog, "<command> [<args>...]"
+    print "Usage:", PROG, "<command> [<args>...]"
     print """
 Commands:
 
   add [<context>]    Add a new entry.  If context is '-' read from stdin.
                      If not specified, user will be prompted for context.
-                     See ASSWORD_PASSWORD for information on password.
+                     See ASSWORD_PASSWORD for information on passwords.
 
-  search [<string>]  Search the database for string.  If string not specified
-                     user will be prompted.
+  dump [<string>]    Dump search results as json.  If string not specified all
+                     entries are returned.  Passwords will not be displayed
+                     unless the ASSWORD_DUMP_PASSWORDS environment variable is
+                     set.
 
-  dump [<string>]    Dump search results as json.  If string not specified
-                     all entries are returned.
+  xsearch [<string>] X search interface, good for X window manager integration.
+                     When launched, the window ID of the currently focused
+                     window is recorded.  If string is not specified a search
+                     prompt will be displayed.  If multiple results for query
+                     are available, a context selection list will be
+                     presented.  When a single result is available, the password
+                     of selected entry will be automatically typed into the
+                     initial window.
 
   help               This help.
 
 The search string "id:<id>" can be used to retrieve a single entry by
-it's index.
+its index.
 
 Environment:
 
-  PGPID             OpenPGP key id of database encryption recipient.
-                    This variable is required to be set.
+  ASSWORD_DB        Path to assword database file (default: ~/.assword/db).
 
-  ASSWORD_DB        Path to assword database file (default: ~/.assword.gpg).
+  ASSWORD_KEYID     OpenPGP key ID of database encryption recipient.
+                    If set to path, key ID will be read from file
+                    (default: ~/.assword/keyid).
 
-  ASSWORD_PASSWORD  Length of auto-generated password in bytes (default: 18).
-                    If set to 'prompt' user will be prompted for password.
+  ASSWORD_PASSWORD  For new entries, length of auto-generated password in
+                    bytes (default: 18).  If set to 'prompt' user will be
+                    prompted for password.
 """
 
 ############################################################
 
-class ListItem(urwid.WidgetWrap):
-    def __init__(self, index, entry):
-        self.index = index
-        self.entry = entry
+ASSWORD_DIR = os.path.join(os.path.expanduser('~'),'.assword')
 
-        w = urwid.AttrMap(
-            urwid.Text('%s: %s' % (self.index, self.entry['context'])),
-            'body', 'focus')
-        self.__super.__init__(w)
-
-    def selectable(self):
-        return True
-
-    def keypress(self, size, key):
-        return key
-
-def select(mset):
-
-    palette = [
-        ('body','dark cyan', '', 'standout'),
-        ('focus','dark red', 'dark cyan', 'standout'),
-        ('head','light red', 'black'),
-        ]
-
-    def keypress (input):
-        global selected
-        if input in ('q', 'Q'):
-            raise urwid.ExitMainLoop()
-        if input in ('n'):
-            focus, pos = listbox.get_focus()
-            if not focus: return
-            listbox.set_focus(pos + 1)
-        if input in ('p'):
-            focus, pos = listbox.get_focus()
-            if not focus: return
-            if pos == 0: return
-            listbox.set_focus(pos - 1)
-        if input is 'enter':
-            focus = listbox.get_focus()[0]
-            selected = {focus.index: focus.entry}
-            raise urwid.ExitMainLoop()
-
-    global selected
-    selected = None
-
-    items = []
-    for index, entry in sorted(mset.iteritems()):
-        items.append(ListItem(index, entry))
-
-    listbox = urwid.ListBox(urwid.SimpleListWalker(items))
-    view = urwid.Frame(urwid.AttrWrap(listbox, 'body'))
-    loop = urwid.MainLoop(
-        view,
-        palette,
-        unhandled_input=keypress,
-        handle_mouse=False,
-        )
-    loop.run()
-
-    return selected
+DBPATH = os.getenv('ASSWORD_DB', os.path.join(ASSWORD_DIR, 'db'))
 
 ############################################################
 
@@ -112,18 +66,44 @@ def pwgen(bytes):
     s = os.urandom(bytes)
     return base64.b64encode(s)
 
-def xclip(text):
-    p = subprocess.Popen(' '.join(["xclip", "-i"]),
-                         shell=True,
-                         stdin=subprocess.PIPE)
-    p.communicate(text)
-
 ############################################################
 
-def check_key():
-    if not KEY:
-        print >>sys.stderr, "Error: OpenPGP key id not specified in PGPID environment variable."
+def get_keyid():
+    keyid = os.getenv('ASSWORD_KEYID')
+    keyfile = os.path.join(ASSWORD_DIR, 'keyid')
+    if keyid and os.path.exists(keyid):
+        keyfile = keyid
+        keyid = None
+    if os.path.exists(keyfile):
+        with open(keyfile, 'r') as f:
+            keyid = f.read().strip()
+
+    save = False
+    if not keyid:
+        print >>sys.stderr, "OpenPGP key ID of encryption target not specified."
+        print >>sys.stderr, "Please provide key ID in ASSWORD_KEYID environment variable,"
+        print >>sys.stderr, "or specify key ID now to save in ~/.assword/keyid file."
+        keyid = raw_input('OpenPGP key ID: ')
+        if keyid == '':
+            keyid = None
+        else:
+            save = True
+
+    if not keyid:
         sys.exit(2)
+
+    try:
+        gpg = gpgme.Context()
+        gpg.get_key(keyid)
+    except gpgme.GpgmeError:
+        print >>sys.stderr, "Invalid key ID:", keyid
+        sys.exit(2)
+
+    if save:
+        with open(keyfile, 'w') as f:
+            f.write(keyid)
+
+    return keyid
 
 def password_prompt():
     try:
@@ -136,20 +116,22 @@ def password_prompt():
     except KeyboardInterrupt:
         sys.exit(-1)
 
+# Add a password to the database.
+# First argument is potentially a context.
 def add(args):
-    # get context
+    keyid = get_keyid()
     try:
-        # as argument
+        # get context as argument
         context = args[0]
-        # or stdin
+        # or from stdin
         if context == '-':
             context = sys.stdin.read()
-    # or prompt if nothing specified
+    # prompt for context if not specified
     except IndexError:
         context = raw_input('context: ')
     except KeyboardInterrupt:
         sys.exit(-1)
-    # get password from prompt if specified
+    # get password from prompt if requested
     if os.getenv('ASSWORD_PASSWORD') == 'prompt':
         password = password_prompt()
     # otherwise auto generate
@@ -158,61 +140,55 @@ def add(args):
         bytes = int(os.getenv('ASSWORD_PASSWORD', 18))
         password = pwgen(bytes)
         print >>sys.stderr, "done."
-    db = assword.Database(DB, KEY)
-    newindex = db.add(context, password)
+    db = assword.Database(DBPATH, keyid)
+    newindex = db.add(context.strip(), password)
+    # NOTE: This is what actually saves the new database!
     db.save()
     print >>sys.stderr, "Wrote new entry:", newindex
 
-def search(query):
-    if not query:
-        try:
-            query = raw_input('search: ')
-        except KeyboardInterrupt:
-            sys.exit(-1)
-    db = assword.Database(DB, KEY)
+def dump(args):
+    query = ' '.join(args)
+    if not os.path.exists(DBPATH):
+        print >>sys.stderr, """Database file does not exist.
+Add an entry to the database with 'assword add'.
+See 'assword help' for more information."""
+        sys.exit(3)
+    db = assword.Database(DBPATH)
     results = db.search(query)
-    if not results:
-        print >>sys.stderr, "No results found."
-        sys.exit(2)
-    if len(results) > 1:
-        try:
-            results = select(results)
-        except KeyboardInterrupt:
-            sys.exit(-1)
-    if not results:
-        sys.exit(-1)
-    index = results.keys()[0]
-    entry = results.values()[0]
-    xclip(entry['password'])
-    print >>sys.stderr, "Entry:", index
-    print >>sys.stderr, "Context:", entry['context']
-    print >>sys.stderr, "Password copied to clipboard."
-
-def dump(query):
-    db = assword.Database(DB, KEY)
-    results = db.search(query)
+    if not os.getenv('ASSWORD_DUMP_PASSWORDS'):
+        for index in results.keys():
+            results[index]['password'] = ''
     print json.dumps(results, sort_keys=True, indent=2)
 
-############################################################
+# The X GUI
+def xsearch(args):
+    query = ' '.join(args)
+    # initialize xdo
+    x = xdo.xdo()
+    # get the id of the currently focused window
+    win = x.window_get_focus()
+    # do it
+    result = assword.Xsearch(DBPATH, query=query).returnValue()
+    # type the password in the saved window
+    if result:
+        x.type(win, result['password'])
 
-DB =  os.getenv('ASSWORD_DB', os.path.join(os.path.expanduser('~'),'.assword.gpg'))
-KEY = os.getenv('PGPID')
+############################################################
+# Basically main()
 
 if len(sys.argv) < 2:
+    print >>sys.stderr, "Command not specified."
     usage()
     sys.exit(1)
 
 cmd = sys.argv[1]
 
 if cmd == 'add':
-    check_key()
     add(sys.argv[2:])
-elif cmd == 'search':
-    check_key()
-    search(' '.join(sys.argv[2:]))
 elif cmd == 'dump':
-    check_key()
-    dump(' '.join(sys.argv[2:]))
+    dump(sys.argv[2:])
+elif cmd == 'xsearch':
+    xsearch(sys.argv[2:])
 elif cmd == 'help':
     usage()
 else:

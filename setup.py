@@ -4,7 +4,7 @@ from distutils.core import setup
 
 setup(
     name = 'assword',
-    version = '0.0',
+    version = '0.1',
     description = 'Secure password database and retrieval system.',
     author = 'Jameson Rollins',
     author_email = 'jrollins@finestructure.net',
@@ -16,6 +16,6 @@ setup(
         'getpass',
         'json',
         'base64',
-        'urwid'
+        'xdo'
         ],
     )
