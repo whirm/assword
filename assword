@@ -150,8 +150,6 @@ See 'assword help' for more information."""
 
 ############################################################
 
-DB =  os.getenv('ASSWORD_DB', os.path.join(os.path.expanduser('~'),'.assword.gpg'))
-KEY = os.getenv('PGPID')
 
 if len(sys.argv) < 2:
     usage()
