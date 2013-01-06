@@ -25,8 +25,7 @@ Commands:
 
   dump [<string>]    Dump search results as json.  If string not specified all
                      entries are returned.  Passwords will not be displayed
-                     unless the ASSWORD_DUMP_PASSWORDS environment variable is
-                     set.
+                     unless ASSWORD_DUMP_PASSWORDS is set.
 
   xsearch [<string>] X search interface, good for X window manager integration.
                      If string is not specified a search prompt will be
@@ -51,6 +50,8 @@ Environment:
   ASSWORD_PASSWORD  For new entries, length of auto-generated password in
                     bytes (default: 18).  If set to 'prompt' user will be
                     prompted for password.
+
+  ASSWORD_DUMP_PASSWORDS Include passwords in dump when set (default: unset).
 
   ASSWORD_XPASTE    Method for password retrieval.  Options are: 'xdo'
                     (default) which attempts to type the password into the
