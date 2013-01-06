@@ -47,11 +47,7 @@ class Database():
         data.seek(0)
         return data
 
-    def _encryptDB(self, data, keyid=None):
-        if not keyid:
-            keyid = self.keyid
-        if not keyid:
-            raise DatabaseKeyError('Key ID for decryption not specified.')
+    def _encryptDB(self, data, keyid):
         # The signer and the recipient are assumed to be the same.
         # FIXME: should these be separated?
         try:
@@ -85,6 +81,10 @@ class Database():
 
         """Save a modified database.  This needs to be done after add() to save changes."""
     def save(self, keyid=None, path=None):
+        if not keyid:
+            keyid = self.keyid
+        if not keyid:
+            raise DatabaseKeyError('Key ID for decryption not specified.')
         cleardata = io.BytesIO(json.dumps(self.entries, sort_keys=True, indent=2))
         encdata = self._encryptDB(cleardata, keyid)
         if not path:
