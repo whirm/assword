@@ -139,6 +139,11 @@ def add(args):
 
 def dump(args):
     query = ' '.join(args)
+    if not os.path.exists(DBPATH):
+        print >>sys.stderr, """Database file does not exist.
+Add an entry to the database with 'assword add'.
+See 'assword help' for more information."""
+        sys.exit(3)
     db = assword.Database(DBPATH)
     results = db.search(query)
     print json.dumps(results, sort_keys=True, indent=2)
