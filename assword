@@ -45,66 +45,6 @@ Environment:
 
 ############################################################
 
-class ListItem(urwid.WidgetWrap):
-    def __init__(self, index, entry):
-        self.index = index
-        self.entry = entry
-
-        w = urwid.AttrMap(
-            urwid.Text('%8s: %s' % (self.index, self.entry['context'])),
-            'body', 'focus')
-        self.__super.__init__(w)
-
-    def selectable(self):
-        return True
-
-    def keypress(self, size, key):
-        return key
-
-def select(mset):
-
-    palette = [
-        ('body','dark cyan', '', 'standout'),
-        ('focus','dark red', 'dark cyan', 'standout'),
-        ('head','light red', 'black'),
-        ]
-
-    def keypress (input):
-        global selected
-        if input in ('q', 'Q'):
-            raise urwid.ExitMainLoop()
-        if input in ('n'):
-            focus, pos = listbox.get_focus()
-            if not focus: return
-            listbox.set_focus(pos + 1)
-        if input in ('p'):
-            focus, pos = listbox.get_focus()
-            if not focus: return
-            if pos == 0: return
-            listbox.set_focus(pos - 1)
-        if input is 'enter':
-            focus = listbox.get_focus()[0]
-            selected = {focus.index: focus.entry}
-            raise urwid.ExitMainLoop()
-
-    global selected
-    selected = None
-
-    items = []
-    for index, entry in sorted(mset.iteritems()):
-        items.append(ListItem(index, entry))
-
-    listbox = urwid.ListBox(urwid.SimpleListWalker(items))
-    view = urwid.Frame(urwid.AttrWrap(listbox, 'body'))
-    loop = urwid.MainLoop(
-        view,
-        palette,
-        unhandled_input=keypress,
-        handle_mouse=False,
-        )
-    loop.run()
-
-    return selected
 
 ############################################################
 
