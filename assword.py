@@ -11,8 +11,11 @@ class DatabaseKeyError(Exception):
         return repr(self.msg)
 
 class DatabaseSignatureError():
-    def __init__(self, sigs):
+    def __init__(self, sigs, msg):
         self.sigs = sigs
+        self.msg = msg
+    def __str__(self):
+        return repr(self.msg)
 
 class Database():
     """An Assword database."""
@@ -39,7 +42,7 @@ class Database():
                 sigs = self.gpg.decrypt_verify(encdata, data)
         # check signature
         if not sigs[0].validity >= gpgme.VALIDITY_FULL:
-            raise DatabaseSignatureError(sigs)
+            raise DatabaseSignatureError(sigs, 'Signature on database was not fully valid.')
         data.seek(0)
         return data
 
