@@ -163,31 +163,6 @@ def add(args):
     db.save()
     print >>sys.stderr, "Wrote new entry:", newindex
 
-def search(query):
-    if not query:
-        try:
-            query = raw_input('search: ')
-        except KeyboardInterrupt:
-            sys.exit(-1)
-    db = assword.Database(DB, KEY)
-    results = db.search(query)
-    if not results:
-        print >>sys.stderr, "No results found."
-        sys.exit(2)
-    if len(results) > 1:
-        try:
-            results = select(results)
-        except KeyboardInterrupt:
-            sys.exit(-1)
-    if not results:
-        sys.exit(-1)
-    index = results.keys()[0]
-    entry = results.values()[0]
-    xclip(entry['password'])
-    print >>sys.stderr, "Entry:", index
-    print >>sys.stderr, "Context:", entry['context']
-    print >>sys.stderr, "Password copied to clipboard."
-
 def dump(query):
     db = assword.Database(DB, KEY)
     results = db.search(query)
@@ -207,9 +182,6 @@ cmd = sys.argv[1]
 if cmd == 'add':
     check_key()
     add(sys.argv[2:])
-elif cmd == 'search':
-    check_key()
-    search(' '.join(sys.argv[2:]))
 elif cmd == 'dump':
     check_key()
     dump(' '.join(sys.argv[2:]))
