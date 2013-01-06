@@ -146,6 +146,9 @@ See 'assword help' for more information."""
         sys.exit(3)
     db = assword.Database(DBPATH)
     results = db.search(query)
+    if not os.getenv('ASSWORD_DUMP_PASSWORDS'):
+        for index in results.keys():
+            results[index]['password'] = ''
     print json.dumps(results, sort_keys=True, indent=2)
 
 ############################################################
