@@ -143,7 +143,7 @@ def add(args):
         password = pwgen(bytes)
         print >>sys.stderr, "done."
     db = assword.Database(DBPATH, keyid)
-    newindex = db.add(context, password)
+    newindex = db.add(context.strip(), password)
     # NOTE: This is what actually saves the new database!
     db.save()
     print >>sys.stderr, "Wrote new entry:", newindex
