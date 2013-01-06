@@ -3,6 +3,7 @@ import io
 import gpgme
 import json
 import time
+import Tkinter
 
 class DatabaseKeyError(Exception):
     def __init__(self, msg):
@@ -107,3 +108,153 @@ class Database():
             else:
                 mset[index] = entry
         return mset
+
+############################################################
+
+class Xsearch():
+    # Tkinter class for X-based Assword query prompt.
+    # Lifted largely from: http://code.activestate.com/recipes/410646-tkinter-listbox-example/
+
+    def __init__(self, dbpath, query=None):
+        self.dbpath = dbpath
+        self.query = None
+        self.db = None
+        self.results = None
+        self.selected = None
+
+        if not os.path.exists(self.dbpath):
+            self._winInit()
+            self._errorMessage("""Password database does not exist.
+Add passwords to the database from the command line with 'assword add'.
+See 'assword help' for more information.""")
+            return
+
+        # The entire action of this database is stored in the
+        # initialization.  The method .returnValue() returns the
+        # user-selected search result of the database query.
+
+        if query:
+            # If we have an intial query, directly do a search without
+            # initializing any X objects.  This will initialize the
+            # database and potentially return entries.
+            self._search(query)
+            # If only a single entry is found, _search() will set the
+            # result and attempt to close any X objects (of which
+            # there are none).  Since we don't need to initialize any
+            # GUI, return the initialization immediately.
+            # See .returnValue().
+            if self.selected:
+                return
+
+        self._winInit()
+        self._promptDisplay()
+        self._selectInit()
+        if self.query:
+            self._query()
+
+    def _dbInit(self):
+        if not self.db:
+            self.db = Database(self.dbpath)
+
+    def _search(self, query):
+        self.query = query
+        if query == '':
+            self.results = None
+            return
+        self._dbInit()
+        self.results = self.db.search(self.query)
+        if len(self.results) == 1:
+            self._selectAndReturn(self.results.keys()[0])
+
+    def _winInit(self):
+        self.master = Tkinter.Tk()
+        self.master.title("assword")
+        self.main = Tkinter.Frame(self.master)
+        self.main.pack(ipadx=5, ipady=5)
+
+    def _errorMessage(self, text):
+        Tkinter.Label(self.main, text=text).pack(padx=5, pady=5)
+        button = Tkinter.Button(self.main, text="OK", command=self._cancel)
+        button.pack()
+        button.bind("<Return>", self._cancel)
+        button.bind("<Escape>", self._cancel)
+        button.focus_set()
+
+    def _promptDisplay(self):
+        self.prompt = Tkinter.Frame(self.master)
+        self.promptLabel = Tkinter.Label(self.prompt, text="Password search:")
+        self.promptLabel.pack(pady=2)
+        self.promptEntry = Tkinter.Entry(self.prompt)
+        if self.query:
+            self.promptEntry.insert(0, self.query)
+        self.promptEntry.pack()
+        self.promptEntry.bind("<Return>", self._query)
+        self.promptEntry.bind("<Escape>", self._cancel)
+        self.prompt.pack(padx=5, pady=5, ipadx=2, ipady=2)
+        self.promptEntry.focus_set()
+
+    def _selectInit(self):
+        self.select = Tkinter.Frame(self.master)
+        self.selectLabel = Tkinter.Label(self.select)
+        self.selectLabel.pack(pady=2)
+        self.selectList = Tkinter.Listbox(self.select, selectmode=Tkinter.SINGLE)
+        self.selectList.bind("<Return>", self._choose)
+        self.selectList.bind("<Escape>", self._cancel)
+
+    def _selectDisplay(self):
+        # clear the listbox
+        self.selectList.delete(0, Tkinter.END)
+        self.select.pack(padx=5, pady=5, ipadx=2, ipady=2)
+        if not self.results or len(self.results) == 0:
+            self.selectLabel.config(text="No results found.")
+            self.selectList.pack_forget()
+            self.promptEntry.focus_set()
+            return
+        self.selectLabel.config(text="Select context:")
+        listwidth = 0
+        listheight = 0
+        # we need a list to store indices of entries in selector
+        self.indices = []
+        for index, entry in sorted(self.results.iteritems()):
+            self.indices.append(index)
+            text = "%s" % (entry['context'])
+            listwidth = max(listwidth, len(text))
+            listheight += 1
+            self.selectList.insert(Tkinter.END, text)
+        self.selectList.config(
+            width=listwidth,
+            height=listheight,
+            )
+        self.selectList.pack()
+        self.selectList.focus_set()
+
+    ##########
+    # These are meant to be bound to key events:
+
+    def _query(self, event=None):
+        self._search(self.promptEntry.get())
+        self._selectDisplay()
+
+    def _choose(self, event=None):
+        item = self.selectList.index(Tkinter.ACTIVE)
+        self._selectAndReturn(self.indices[item])
+
+    def _cancel(self, event=None):
+        self._die()
+
+    ##########
+
+    def _selectAndReturn(self, index):
+        "Select a result with a given index and exit the GUI."
+        self.selected = self.results[str(index)]
+        self._die()
+
+    def _die(self):
+        if 'main' in dir(self):
+            self.main.destroy()
+
+    # Return the user-selected search result of the database query.
+    def returnValue(self):
+        if 'master' in dir(self):
+            self.master.wait_window(self.main)
+        return self.selected
