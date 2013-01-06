@@ -50,6 +50,11 @@ class Database():
             raise DatabaseKeyError('Key ID for decryption not specified.')
         # The signer and the recipient are assumed to be the same.
         # FIXME: should these be separated?
+        try:
+            recipient = self.gpg.get_key(keyid or self.keyid)
+            signer = self.gpg.get_key(keyid)
+        except:
+            raise DatabaseKeyError('GPG could not retrieve encryption key.')
         self.gpg.signers = [signer]
         encdata = io.BytesIO()
         data.seek(0)
