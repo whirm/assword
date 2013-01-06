@@ -4,6 +4,12 @@ import gpgme
 import json
 import time
 
+class DatabaseKeyError(Exception):
+    def __init__(self, msg):
+        self.msg = msg
+    def __str__(self):
+        return repr(self.msg)
+
 class DatabaseSignatureError():
     def __init__(self, sigs):
         self.sigs = sigs
@@ -11,11 +17,9 @@ class DatabaseSignatureError():
 class Database():
     """An Assword database."""
 
-    def __init__(self, path, key):
+    def __init__(self, path, keyid=None):
         self.path = path
-        # key for signer and recipient
-        # FIXME: should these be separated?
-        self.key = key
+        self.keyid = keyid
 
         self.gpg = gpgme.Context()
         self.gpg.armor = True
@@ -39,9 +43,13 @@ class Database():
         data.seek(0)
         return data
 
-    def _encryptDB(self, data):
-        recipient = self.gpg.get_key(self.key)
-        signer = self.gpg.get_key(self.key)
+    def _encryptDB(self, data, keyid=None):
+        if not keyid:
+            keyid = self.keyid
+        if not keyid:
+            raise DatabaseKeyError('Key ID for decryption not specified.')
+        # The signer and the recipient are assumed to be the same.
+        # FIXME: should these be separated?
         self.gpg.signers = [signer]
         encdata = io.BytesIO()
         data.seek(0)
@@ -66,10 +74,10 @@ class Database():
         self.entries[newindex]['date'] = int(time.time())
         return newindex
 
-    def save(self):
+    def save(self, keyid=None):
         """Save a modified database.  This needs to be done after add() to save changes."""
         cleardata = io.BytesIO(json.dumps(self.entries, sort_keys=True, indent=2))
-        encdata = self._encryptDB(cleardata)
+        encdata = self._encryptDB(cleardata, keyid)
         if os.path.exists(self.path):
             os.rename(self.path, self.path + '.bak')
         with open(self.path, 'w') as f:
