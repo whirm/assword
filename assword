@@ -52,12 +52,6 @@ def pwgen(bytes):
     s = os.urandom(bytes)
     return base64.b64encode(s)
 
-def xclip(text):
-    p = subprocess.Popen(' '.join(["xclip", "-i"]),
-                         shell=True,
-                         stdin=subprocess.PIPE)
-    p.communicate(text)
-
 ############################################################
 
 def check_key():
