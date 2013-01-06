@@ -6,6 +6,7 @@ import time
 import Tkinter
 
 class DatabaseKeyError(Exception):
+    """Indicates no key for encryption."""
     def __init__(self, msg):
         self.msg = msg
     def __str__(self):
@@ -19,6 +20,7 @@ class DatabasePathError(Exception):
         return repr(self.msg)
 
 class DatabaseSignatureError(Exception):
+    """Indicates signatures on database file were not fully valid."""
     def __init__(self, sigs, msg):
         self.sigs = sigs
         self.msg = msg
@@ -29,6 +31,8 @@ class Database():
     """An Assword database."""
 
     def __init__(self, dbpath=None, keyid=None):
+        """Database at dbpath will be decrypted and loaded into memory.
+If dbpath not specified, empty database will be initialized."""
         self.dbpath = dbpath
         self.keyid = keyid
 
@@ -73,12 +77,14 @@ class Database():
         return encdata
 
     def _newindex(self):
+        # Return a potential new entry index.
         indicies = [int(index) for index in self.entries.keys()]
         if not indicies: indicies = [-1]
         return str(max(indicies) + 1)
 
     def add(self, context, password):
-        """Add a new entry to the database."""
+        """Add a new entry to the database.
+Database won't be saved to disk until save()."""
         newindex = self._newindex()
         self.entries[newindex] = {}
         self.entries[newindex]['context'] = context
@@ -86,8 +92,10 @@ class Database():
         self.entries[newindex]['date'] = int(time.time())
         return newindex
 
-        """Save a modified database.  This needs to be done after add() to save changes."""
     def save(self, keyid=None, path=None):
+        """Save database to disk.
+Key ID must either be specified here or at database initialization.
+If path not specified, database will be saved at original dbpath location."""
         if not keyid:
             keyid = self.keyid
         if not keyid:
@@ -107,8 +115,9 @@ class Database():
         os.rename(newpath, path)
 
     def search(self, query=None):
-        """Search the database entry 'context' and 'info' fields for string."""
-        # look for special search string for single id
+        """Search the 'context' fields of database entries for string.
+If query is None, all entries will be returned.  Special query
+'id:<id>' will return single entry."""
         if query.find('id:') == 0:
             index = query[3:]
             if index in self.entries:
@@ -126,10 +135,12 @@ class Database():
 ############################################################
 
 class Xsearch():
-    # Tkinter class for X-based Assword query prompt.
+    """Assword X-based query UI."""
     # Lifted largely from: http://code.activestate.com/recipes/410646-tkinter-listbox-example/
 
     def __init__(self, dbpath, query=None):
+        """Entire action of this class is in initialization.
+May specify initial query with 'query'."""
         self.dbpath = dbpath
         self.query = None
         self.db = None
@@ -142,10 +153,6 @@ class Xsearch():
 Add passwords to the database from the command line with 'assword add'.
 See 'assword help' for more information.""")
             return
-
-        # The entire action of this database is stored in the
-        # initialization.  The method .returnValue() returns the
-        # user-selected search result of the database query.
 
         if query:
             # If we have an intial query, directly do a search without
@@ -259,7 +266,6 @@ See 'assword help' for more information.""")
     ##########
 
     def _selectAndReturn(self, index):
-        "Select a result with a given index and exit the GUI."
         self.selected = self.results[str(index)]
         self._die()
 
@@ -267,8 +273,8 @@ See 'assword help' for more information.""")
         if 'main' in dir(self):
             self.main.destroy()
 
-    # Return the user-selected search result of the database query.
     def returnValue(self):
+        """Return user-selected search result of database query."""
         if 'master' in dir(self):
             self.master.wait_window(self.main)
         return self.selected
