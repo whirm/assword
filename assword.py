@@ -11,6 +11,13 @@ class DatabaseKeyError(Exception):
     def __str__(self):
         return repr(self.msg)
 
+class DatabasePathError(Exception):
+    """Indicates no path for database save."""
+    def __init__(self, msg):
+        self.msg = msg
+    def __str__(self):
+        return repr(self.msg)
+
 class DatabaseSignatureError(Exception):
     def __init__(self, sigs, msg):
         self.sigs = sigs
@@ -85,10 +92,12 @@ class Database():
             keyid = self.keyid
         if not keyid:
             raise DatabaseKeyError('Key ID for decryption not specified.')
-        cleardata = io.BytesIO(json.dumps(self.entries, sort_keys=True, indent=2))
-        encdata = self._encryptDB(cleardata, keyid)
         if not path:
             path = self.dbpath
+        if not path:
+            raise DatabasePathError('Save path not specified.')
+        cleardata = io.BytesIO(json.dumps(self.entries, sort_keys=True, indent=2))
+        encdata = self._encryptDB(cleardata, keyid)
         newpath = path + '.new'
         bakpath = path + '.bak'
         with open(newpath, 'w') as f:
