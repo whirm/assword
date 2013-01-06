@@ -118,21 +118,22 @@ def password_prompt():
     except KeyboardInterrupt:
         sys.exit(-1)
 
+# Add a password to the database.
+# First argument is potentially a context.
 def add(args):
     keyid = get_keyid()
-    # get context
     try:
-        # as argument
+        # get context as argument
         context = args[0]
-        # or stdin
+        # or from stdin
         if context == '-':
             context = sys.stdin.read()
-    # or prompt if nothing specified
+    # prompt for context if not specified
     except IndexError:
         context = raw_input('context: ')
     except KeyboardInterrupt:
         sys.exit(-1)
-    # get password from prompt if specified
+    # get password from prompt if requested
     if os.getenv('ASSWORD_PASSWORD') == 'prompt':
         password = password_prompt()
     # otherwise auto generate
@@ -143,6 +144,7 @@ def add(args):
         print >>sys.stderr, "done."
     db = assword.Database(DBPATH, keyid)
     newindex = db.add(context, password)
+    # NOTE: This is what actually saves the new database!
     db.save()
     print >>sys.stderr, "Wrote new entry:", newindex
 
