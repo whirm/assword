@@ -83,14 +83,19 @@ class Database():
         self.entries[newindex]['date'] = int(time.time())
         return newindex
 
-    def save(self, keyid=None):
         """Save a modified database.  This needs to be done after add() to save changes."""
+    def save(self, keyid=None, path=None):
         cleardata = io.BytesIO(json.dumps(self.entries, sort_keys=True, indent=2))
         encdata = self._encryptDB(cleardata, keyid)
-        if os.path.exists(self.path):
-            os.rename(self.path, self.path + '.bak')
-        with open(self.path, 'w') as f:
+        if not path:
+            path = self.dbpath
+        newpath = path + '.new'
+        bakpath = path + '.bak'
+        with open(newpath, 'w') as f:
             f.write(encdata.getvalue())
+        if os.path.exists(path):
+            os.rename(path, bakpath)
+        os.rename(newpath, path)
 
     def search(self, query=None):
         """Search the database entry 'context' and 'info' fields for string."""
