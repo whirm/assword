@@ -92,6 +92,11 @@ Database won't be saved to disk until save()."""
         self.entries[newindex]['date'] = int(time.time())
         return newindex
 
+    def remove(self, index):
+        """Remove an entry from the database.
+Database won't be saved to disk until save()."""
+        del self.entries[index]
+
     def save(self, keyid=None, path=None):
         """Save database to disk.
 Key ID must either be specified here or at database initialization.
