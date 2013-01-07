@@ -34,6 +34,8 @@ Commands:
                      result is available, the password will be retrieved
                      according to the ASSWORD_XPASTE method.
 
+  remove [id:]<id>   Delete an entry from the database by index.
+
   help               This help.
 
 The search string "id:<id>" can be used to retrieve a single entry by
@@ -193,6 +195,33 @@ def xsearch(args, method='xdo'):
         elif method == 'xclip':
             xclip(result['password'])
 
+def remove(args):
+    keyid = get_keyid()
+    try:
+        index = args[0]
+    except IndexError:
+        print >>sys.stderr, "Must specify index to remove."
+        sys.exit(1)
+    if index.find('id:') == 0:
+        index = index[3:]
+    db = assword.Database(DBPATH, keyid)
+    if index not in db.entries:
+        print >>sys.stderr, "No entry with index", index + "."
+        sys.exit(5)
+    try:
+        print >>sys.stderr, "Really remove entry " + index + "?  Context:"
+        print >>sys.stderr
+        print >>sys.stderr, db.entries[index]['context']
+        print >>sys.stderr
+        response = raw_input("Type 'yes' to remove: ")
+    except KeyboardInterrupt:
+        sys.exit(-1)
+    if response != 'yes':
+        sys.exit(-1)
+    db.remove(index)
+    db.save()
+    print >>sys.stderr, "Removed entry: id:" + index
+
 ############################################################
 # Basically main()
 
@@ -210,6 +239,8 @@ elif cmd == 'dump':
 elif cmd == 'xsearch':
     method = os.getenv('ASSWORD_XPASTE', 'xdo')
     xsearch(sys.argv[2:], method=method)
+elif cmd == 'remove':
+    remove(sys.argv[2:])
 elif cmd == 'help':
     usage()
 else:
