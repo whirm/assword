@@ -157,7 +157,7 @@ def add(args):
     newindex = db.add(context.strip(), password)
     # NOTE: This is what actually saves the new database!
     db.save()
-    print >>sys.stderr, "Wrote new entry:", newindex
+    print >>sys.stderr, "Wrote new entry: id:" + newindex
 
 def dump(args):
     query = ' '.join(args)
