@@ -194,10 +194,7 @@ def xsearch(args, method='xdo'):
     if result:
         if method == 'xdo':
             x.focus_window(win)
-            # FIXME: it's unclear that the following call is
-            # necessary, but it seems to timeout after about 20
-            # seconds.
-            #x.wait_for_window_focus(win)
+            x.wait_for_window_focus(win)
             x.type(result['password'])
         elif method == 'xclip':
             xclip(result['password'])
