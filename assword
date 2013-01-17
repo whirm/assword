@@ -113,6 +113,8 @@ def get_keyid():
         sys.exit(2)
 
     if save:
+        if not os.path.isdir(os.path.dirname(keyfile)):
+            os.mkdir(os.path.dirname(keyfile))
         with open(keyfile, 'w') as f:
             f.write(keyid)
 
