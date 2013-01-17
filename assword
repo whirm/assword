@@ -8,6 +8,7 @@ import base64
 import gpgme
 import assword
 import xdo
+import subprocess
 
 ############################################################
 
@@ -24,17 +25,16 @@ Commands:
 
   dump [<string>]    Dump search results as json.  If string not specified all
                      entries are returned.  Passwords will not be displayed
-                     unless the ASSWORD_DUMP_PASSWORDS environment variable is
-                     set.
+                     unless ASSWORD_DUMP_PASSWORDS is set.
 
   xsearch [<string>] X search interface, good for X window manager integration.
-                     When launched, the window ID of the currently focused
-                     window is recorded.  If string is not specified a search
-                     prompt will be displayed.  If multiple results for query
-                     are available, a context selection list will be
-                     presented.  When a single result is available, the password
-                     of selected entry will be automatically typed into the
-                     initial window.
+                     If string is not specified a search prompt will be
+                     displayed.  If multiple results for query are available a
+                     context selection list will be presented.  When a single
+                     result is available, the password will be retrieved
+                     according to the ASSWORD_XPASTE method.
+
+  remove [id:]<id>   Delete an entry from the database by index.
 
   help               This help.
 
@@ -52,6 +52,13 @@ Environment:
   ASSWORD_PASSWORD  For new entries, length of auto-generated password in
                     bytes (default: 18).  If set to 'prompt' user will be
                     prompted for password.
+
+  ASSWORD_DUMP_PASSWORDS Include passwords in dump when set (default: unset).
+
+  ASSWORD_XPASTE    Method for password retrieval.  Options are: 'xdo'
+                    (default) which attempts to type the password into the
+                    window that had focus on launch, or 'xclip' which inserts
+                    the password in the X clipboard.
 """
 
 ############################################################
@@ -65,6 +72,12 @@ DBPATH = os.getenv('ASSWORD_DB', os.path.join(ASSWORD_DIR, 'db'))
 def pwgen(bytes):
     s = os.urandom(bytes)
     return base64.b64encode(s)
+
+def xclip(text):
+    p = subprocess.Popen(' '.join(["xclip", "-i"]),
+                         shell=True,
+                         stdin=subprocess.PIPE)
+    p.communicate(text)
 
 ############################################################
 
@@ -100,6 +113,8 @@ def get_keyid():
         sys.exit(2)
 
     if save:
+        if not os.path.isdir(os.path.dirname(keyfile)):
+            os.mkdir(os.path.dirname(keyfile))
         with open(keyfile, 'w') as f:
             f.write(keyid)
 
@@ -144,7 +159,7 @@ def add(args):
     newindex = db.add(context.strip(), password)
     # NOTE: This is what actually saves the new database!
     db.save()
-    print >>sys.stderr, "Wrote new entry:", newindex
+    print >>sys.stderr, "Wrote new entry: id:" + newindex
 
 def dump(args):
     query = ' '.join(args)
@@ -161,17 +176,55 @@ See 'assword help' for more information."""
     print json.dumps(results, sort_keys=True, indent=2)
 
 # The X GUI
-def xsearch(args):
+def xsearch(args, method='xdo'):
     query = ' '.join(args)
-    # initialize xdo
-    x = xdo.xdo()
-    # get the id of the currently focused window
-    win = x.window_get_focus()
+    if method == 'xdo':
+        # initialize xdo
+        x = xdo.xdo()
+        # get the id of the currently focused window
+        win = x.get_focused_window()
+    elif method == 'xclip':
+        pass
+    else:
+        print >>sys.stderr, "Unknown X paste method:", method
+        sys.exit(4)
     # do it
     result = assword.Xsearch(DBPATH, query=query).returnValue()
     # type the password in the saved window
     if result:
-        x.type(win, result['password'])
+        if method == 'xdo':
+            x.focus_window(win)
+            x.wait_for_window_focus(win)
+            x.type(result['password'])
+        elif method == 'xclip':
+            xclip(result['password'])
+
+def remove(args):
+    keyid = get_keyid()
+    try:
+        index = args[0]
+    except IndexError:
+        print >>sys.stderr, "Must specify index to remove."
+        sys.exit(1)
+    if index.find('id:') == 0:
+        index = index[3:]
+    db = assword.Database(DBPATH, keyid)
+    if index not in db.entries:
+        print >>sys.stderr, "No entry with index", index + "."
+        sys.exit(5)
+    try:
+        print >>sys.stderr, "Really remove entry " + index + "?  Context:"
+        print >>sys.stderr
+        print >>sys.stderr, db.entries[index]['context']
+        print >>sys.stderr
+        response = raw_input("Type 'yes' to remove: ")
+    except KeyboardInterrupt:
+        sys.exit(-1)
+    if response != 'yes':
+        sys.exit(-1)
+    db.remove(index)
+    db.save()
+    print >>sys.stderr, "Removed entry: id:" + index
 
 ############################################################
 # Basically main()
@@ -188,7 +241,10 @@ if cmd == 'add':
 elif cmd == 'dump':
     dump(sys.argv[2:])
 elif cmd == 'xsearch':
-    xsearch(sys.argv[2:])
+    method = os.getenv('ASSWORD_XPASTE', 'xdo')
+    xsearch(sys.argv[2:], method=method)
+elif cmd == 'remove':
+    remove(sys.argv[2:])
 elif cmd == 'help':
     usage()
 else:
