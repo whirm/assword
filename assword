@@ -7,7 +7,6 @@ import json
 import base64
 import gpgme
 import assword
-import xdo
 import subprocess
 
 ############################################################
@@ -179,6 +178,12 @@ See 'assword help' for more information."""
 def xsearch(args, method='xdo'):
     query = ' '.join(args)
     if method == 'xdo':
+        try:
+            import xdo
+        except:
+            print >>sys.stderr, "The xdo module is not found, so the 'xdo' paste method is not available."
+            print >>sys.stderr, "Please install python-xdo."
+            sys.exit()
         # initialize xdo
         x = xdo.xdo()
         # get the id of the currently focused window
