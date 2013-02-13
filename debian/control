@@ -22,4 +22,7 @@ Recommends:
 Description: Simple and secure password database and retrieval system.
  Passwords and context strings are stored in a single OpenPGP
  encrypted and signed file.  The contexts can be searched.  Passwords
- are securely retrieved without displaying on the screen.
+ are securely retrieved without displaying on the screen.  Multiple
+ retrieval methods are available, including inserting retrieved
+ password into the X clipboard, or typing them directly into an X
+ window.
