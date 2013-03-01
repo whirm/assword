@@ -193,7 +193,7 @@ See 'assword help' for more information.""")
             self._selectAndReturn(self.results.keys()[0])
 
     def _winInit(self):
-        self.master = Tkinter.Tk()
+        self.master = Tkinter.Tk(className='assword')
         self.master.title("assword")
         self.main = Tkinter.Frame(self.master)
         self.main.pack(ipadx=5, ipady=5)
