@@ -16,7 +16,7 @@ def pwgen(bytes):
 
 class DatabaseError(Exception):
     def __init__(self, msg):
-        self.msg = 'Assword database error: %s' % (msg)
+        self.msg = msg
     def __str__(self):
         return repr(self.msg)
 

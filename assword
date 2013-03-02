@@ -85,7 +85,7 @@ def open_db(keyid=None):
     try:
         db = assword.Database(DBPATH, keyid)
     except assword.DatabaseError as e:
-        print >>sys.stderr, e.msg
+        print >>sys.stderr, 'Assword database error: e.msg'
         sys.exit(10)
     return db
 
