@@ -169,7 +169,8 @@ See 'assword help' for more information.""")
             # there are none).  Since we don't need to initialize any
             # GUI, return the initialization immediately.
             # See .returnValue().
-            if self.selected:
+            if len(self.results) == 1:
+                self._selectAndReturn(self.results.keys()[0])
                 return
 
         self._winInit()
@@ -189,8 +190,6 @@ See 'assword help' for more information.""")
             return
         self._dbInit()
         self.results = self.db.search(self.query)
-        if len(self.results) == 1:
-            self._selectAndReturn(self.results.keys()[0])
 
     def _winInit(self):
         self.master = Tkinter.Tk(className='assword')
