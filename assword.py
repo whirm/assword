@@ -147,11 +147,12 @@ class Xsearch():
     """Assword X-based query UI."""
     # Lifted largely from: http://code.activestate.com/recipes/410646-tkinter-listbox-example/
 
-    def __init__(self, dbpath, query=None):
+    def __init__(self, dbpath, query=None, keyid=None):
         """Entire action of this class is in initialization.
 May specify initial query with 'query'."""
         self.dbpath = dbpath
         self.query = None
+        self.keyid = keyid
         self.db = None
         self.results = None
         self.selected = None
@@ -229,16 +230,27 @@ See 'assword help' for more information.""")
         self.selectList = Tkinter.Listbox(self.select, selectmode=Tkinter.SINGLE)
         self.selectList.bind("<Return>", self._choose)
         self.selectList.bind("<Escape>", self._cancel)
+        self.selectButton = Tkinter.Button(self.select)
+        self.selectButton.bind("<Escape>", self._cancel)
 
     def _selectDisplay(self):
         # clear the listbox
         self.selectList.delete(0, Tkinter.END)
         self.select.pack(padx=5, pady=5, ipadx=2, ipady=2)
+        self.selectButton.pack_forget()
+
+        # allow user to create entry if no results
         if not self.results or len(self.results) == 0:
-            self.selectLabel.config(text="No results found.")
+            self.selectLabel.config(text="""No results found.
+
+Create entry with above string as context:""")
             self.selectList.pack_forget()
+            self.selectButton.config(text="Create", command=self._create)
+            self.selectButton.bind("<Return>", self._create)
+            self.selectButton.pack()
             self.promptEntry.focus_set()
             return
+
         self.selectLabel.config(text="Select context:")
         listwidth = 0
         listheight = 0
@@ -257,12 +269,22 @@ See 'assword help' for more information.""")
         self.selectList.pack()
         self.selectList.focus_set()
 
+    def _createEntry(self):
+        context = self.query
+        newindex = self.db.add(context)
+        self.db.save(self.keyid)
+        self.results = self.db.search('id:%s' % newindex)
+        self._selectAndReturn(self.results.keys()[0])
+
     ##########
     # These are meant to be bound to key events:
 
     def _query(self, event=None):
         self._search(self.promptEntry.get())
         self._selectDisplay()
+
+    def _create(self, event=None):
+        self._createEntry()
 
     def _choose(self, event=None):
         item = self.selectList.index(Tkinter.ACTIVE)
