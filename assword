@@ -180,8 +180,8 @@ def add(args):
 def dump(args):
     query = ' '.join(args)
     if not os.path.exists(DBPATH):
-        print >>sys.stderr, """Database file does not exist.
-Add an entry to the database with 'assword add'.
+        print >>sys.stderr, """Assword database does not exist.
+To add an entry to the database use 'assword add'.
 See 'assword help' for more information."""
         sys.exit(10)
     db = open_db()
