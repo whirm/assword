@@ -5,25 +5,9 @@ import json
 import time
 import Tkinter
 
-class DatabaseKeyError(Exception):
-    """Indicates GPG key error."""
+class DatabaseError(Exception):
     def __init__(self, msg):
-        self.msg = 'Assword key error: %s' % (msg)
-    def __str__(self):
-        return repr(self.msg)
-
-class DatabasePathError(Exception):
-    """Indicates path error."""
-    def __init__(self, msg, path):
-        self.msg = 'Assword database error: %s: %s' % (msg, path)
-    def __str__(self):
-        return repr(self.msg)
-
-class DatabaseSignatureError(Exception):
-    """Indicates signatures on database file were not fully valid."""
-    def __init__(self, sigs, msg):
-        self.sigs = sigs
-        self.msg = 'Assword signature error: %s' % (msg)
+        self.msg = 'Assword database error: %s' % (msg)
     def __str__(self):
         return repr(self.msg)
 
@@ -45,7 +29,7 @@ If dbpath not specified, empty database will be initialized."""
                 # FIXME: trap exception if json corrupt
                 self.entries = json.loads(cleardata.getvalue())
             except IOError as e:
-                raise DatabasePathError(e)
+                raise DatabaseError(e)
         else:
             self.entries = {}
 
@@ -58,7 +42,7 @@ If dbpath not specified, empty database will be initialized."""
                 sigs = self.gpg.decrypt_verify(encdata, data)
         # check signature
         if not sigs[0].validity >= gpgme.VALIDITY_FULL:
-            raise DatabaseSignatureError(sigs, 'Signature on database was not fully valid.')
+            raise DatabaseError(sigs, 'Signature on database was not fully valid.')
         data.seek(0)
         return data
 
@@ -69,7 +53,7 @@ If dbpath not specified, empty database will be initialized."""
             recipient = self.gpg.get_key(keyid or self.keyid)
             signer = self.gpg.get_key(keyid)
         except:
-            raise DatabaseKeyError('GPG could not retrieve encryption key.')
+            raise DatabaseError('Could not retrieve GPG encryption key.')
         self.gpg.signers = [signer]
         encdata = io.BytesIO()
         data.seek(0)
@@ -108,11 +92,11 @@ If path not specified, database will be saved at original dbpath location."""
         if not keyid:
             keyid = self.keyid
         if not keyid:
-            raise DatabaseKeyError('Key ID for decryption not specified.')
+            raise DatabaseError('Key ID for decryption not specified.')
         if not path:
             path = self.dbpath
         if not path:
-            raise DatabasePathError('Save path not specified.')
+            raise DatabaseError('Save path not specified.')
         cleardata = io.BytesIO(json.dumps(self.entries, sort_keys=True, indent=2))
         encdata = self._encryptDB(cleardata, keyid)
         newpath = path + '.new'

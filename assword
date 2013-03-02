@@ -82,14 +82,14 @@ def xclip(text):
 # Return codes:
 # 2 command line error
 # 3 password error
-# 10 db open error
+# 10 db error
 # 20 gpg/key error
 ############################################################
 
 def open_db(keyid=None):
     try:
         db = assword.Database(DBPATH, keyid)
-    except assword.DatabasePathError as e:
+    except assword.DatabaseError as e:
         print >>sys.stderr, e.msg
         sys.exit(10)
     return db
