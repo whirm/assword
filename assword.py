@@ -3,7 +3,16 @@ import io
 import gpgme
 import json
 import time
+import base64
 import Tkinter
+
+############################################################
+
+def pwgen(bytes):
+    s = os.urandom(bytes)
+    return base64.b64encode(s)
+
+############################################################
 
 class DatabaseError(Exception):
     def __init__(self, msg):
@@ -70,10 +79,15 @@ If dbpath not specified, empty database will be initialized."""
         if not indicies: indicies = [-1]
         return str(max(indicies) + 1)
 
-    def add(self, context, password):
+    def add(self, context, password=None):
         """Add a new entry to the database.
 Database won't be saved to disk until save()."""
         newindex = self._newindex()
+
+        if not password:
+            bytes = int(os.getenv('ASSWORD_PASSWORD', 18))
+            password = pwgen(bytes)
+
         self.entries[newindex] = {}
         self.entries[newindex]['context'] = context
         self.entries[newindex]['password'] = password

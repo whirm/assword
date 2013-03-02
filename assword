@@ -4,7 +4,6 @@ import os
 import sys
 import getpass
 import json
-import base64
 import gpgme
 import assword
 import subprocess
@@ -67,10 +66,6 @@ ASSWORD_DIR = os.path.join(os.path.expanduser('~'),'.assword')
 DBPATH = os.getenv('ASSWORD_DB', os.path.join(ASSWORD_DIR, 'db'))
 
 ############################################################
-
-def pwgen(bytes):
-    s = os.urandom(bytes)
-    return base64.b64encode(s)
 
 def xclip(text):
     p = subprocess.Popen(' '.join(["xclip", "-i"]),
@@ -167,10 +162,8 @@ def add(args):
         password = password_prompt()
     # otherwise auto generate
     else:
-        print >>sys.stderr, "Auto-generating password...",
-        bytes = int(os.getenv('ASSWORD_PASSWORD', 18))
-        password = pwgen(bytes)
-        print >>sys.stderr, "done."
+        print >>sys.stderr, "Auto-generating password..."
+        password = None
 
     newindex = db.add(context.strip(), password)
     # NOTE: This is what actually saves the new database!
