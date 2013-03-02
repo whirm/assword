@@ -79,6 +79,13 @@ def xclip(text):
     p.communicate(text)
 
 ############################################################
+# Return codes:
+# 2 command line error
+# 3 password error
+# 10 db open error
+# 20 gpg/key error
+############################################################
+
 
 def get_keyid():
     keyid = os.getenv('ASSWORD_KEYID')
@@ -102,14 +109,14 @@ def get_keyid():
             save = True
 
     if not keyid:
-        sys.exit(2)
+        sys.exit(20)
 
     try:
         gpg = gpgme.Context()
         gpg.get_key(keyid)
     except gpgme.GpgmeError:
         print >>sys.stderr, "Invalid key ID:", keyid
-        sys.exit(2)
+        sys.exit(20)
 
     if save:
         if not os.path.isdir(os.path.dirname(keyfile)):
@@ -166,7 +173,7 @@ def dump(args):
         print >>sys.stderr, """Database file does not exist.
 Add an entry to the database with 'assword add'.
 See 'assword help' for more information."""
-        sys.exit(3)
+        sys.exit(10)
     db = assword.Database(DBPATH)
     results = db.search(query)
     if not os.getenv('ASSWORD_DUMP_PASSWORDS'):
@@ -192,7 +199,7 @@ def xsearch(args, method='xdo'):
         pass
     else:
         print >>sys.stderr, "Unknown X paste method:", method
-        sys.exit(4)
+        sys.exit(2)
     # do it
     result = assword.Xsearch(DBPATH, query=query).returnValue()
     # type the password in the saved window
@@ -210,13 +217,13 @@ def remove(args):
         index = args[0]
     except IndexError:
         print >>sys.stderr, "Must specify index to remove."
-        sys.exit(1)
+        sys.exit(2)
     if index.find('id:') == 0:
         index = index[3:]
     db = assword.Database(DBPATH, keyid)
     if index not in db.entries:
         print >>sys.stderr, "No entry with index", index + "."
-        sys.exit(5)
+        sys.exit(1)
     try:
         print >>sys.stderr, "Really remove entry " + index + "?  Context:"
         print >>sys.stderr
@@ -237,7 +244,7 @@ def remove(args):
 if len(sys.argv) < 2:
     print >>sys.stderr, "Command not specified."
     usage()
-    sys.exit(1)
+    sys.exit(2)
 
 cmd = sys.argv[1]
 
@@ -256,3 +263,4 @@ else:
     print >>sys.stderr, "Unknown command:", cmd
     print >>sys.stderr
     usage()
+    sys.exit(2)
