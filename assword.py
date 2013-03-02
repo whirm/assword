@@ -8,14 +8,14 @@ import Tkinter
 class DatabaseKeyError(Exception):
     """Indicates no key for encryption."""
     def __init__(self, msg):
-        self.msg = msg
+        self.msg = 'Assword key error: %s' % (msg)
     def __str__(self):
         return repr(self.msg)
 
 class DatabasePathError(Exception):
     """Indicates no path for database save."""
-    def __init__(self, msg):
-        self.msg = msg
+    def __init__(self, msg, path):
+        self.msg = 'Assword database error: %s: %s' % (msg, path)
     def __str__(self):
         return repr(self.msg)
 
@@ -23,7 +23,7 @@ class DatabaseSignatureError(Exception):
     """Indicates signatures on database file were not fully valid."""
     def __init__(self, sigs, msg):
         self.sigs = sigs
-        self.msg = msg
+        self.msg = 'Assword signature error: %s' % (msg)
     def __str__(self):
         return repr(self.msg)
 
