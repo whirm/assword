@@ -202,6 +202,16 @@ See 'assword help' for more information.""")
         self.main = Tkinter.Frame(self.master)
         self.main.pack(ipadx=5, ipady=5)
 
+    def _centerWindow(self):
+        self.master.update_idletasks()
+        sw = self.master.winfo_screenwidth()
+        sh = self.master.winfo_screenheight()
+        w, h = tuple(int(_) for _ in self.master.geometry().split('+')[0].split('x'))
+        x = (sw - w)/2
+        y = (sh - h)/2
+        geometry = '%dx%d+%d+%d' % (w, h, x, y)
+        self.master.geometry(geometry)
+
     def _errorMessage(self, text):
         Tkinter.Label(self.main, text=text).pack(padx=5, pady=5)
         button = Tkinter.Button(self.main, text="OK", command=self._cancel)
