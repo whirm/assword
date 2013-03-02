@@ -6,14 +6,14 @@ import time
 import Tkinter
 
 class DatabaseKeyError(Exception):
-    """Indicates no key for encryption."""
+    """Indicates GPG key error."""
     def __init__(self, msg):
         self.msg = 'Assword key error: %s' % (msg)
     def __str__(self):
         return repr(self.msg)
 
 class DatabasePathError(Exception):
-    """Indicates no path for database save."""
+    """Indicates path error."""
     def __init__(self, msg, path):
         self.msg = 'Assword database error: %s: %s' % (msg, path)
     def __str__(self):
