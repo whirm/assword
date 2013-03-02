@@ -204,7 +204,8 @@ def xsearch(args, method='xdo'):
         print >>sys.stderr, "Unknown X paste method:", method
         sys.exit(2)
     # do it
-    result = assword.Xsearch(DBPATH, query=query).returnValue()
+    keyid = get_keyid()
+    result = assword.Xsearch(DBPATH, query=query, keyid=keyid).returnValue()
     # type the password in the saved window
     if result:
         if method == 'xdo':
