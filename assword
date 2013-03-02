@@ -86,6 +86,13 @@ def xclip(text):
 # 20 gpg/key error
 ############################################################
 
+def open_db(keyid=None):
+    try:
+        db = assword.Database(DBPATH, keyid)
+    except assword.DatabasePathError as e:
+        print >>sys.stderr, e.msg
+        sys.exit(10)
+    return db
 
 def get_keyid():
     keyid = os.getenv('ASSWORD_KEYID')
@@ -152,6 +159,9 @@ def add(args):
         context = raw_input('context: ')
     except KeyboardInterrupt:
         sys.exit(-1)
+
+    db = open_db(keyid)
+
     # get password from prompt if requested
     if os.getenv('ASSWORD_PASSWORD') == 'prompt':
         password = password_prompt()
@@ -161,7 +171,7 @@ def add(args):
         bytes = int(os.getenv('ASSWORD_PASSWORD', 18))
         password = pwgen(bytes)
         print >>sys.stderr, "done."
-    db = assword.Database(DBPATH, keyid)
+
     newindex = db.add(context.strip(), password)
     # NOTE: This is what actually saves the new database!
     db.save()
@@ -174,7 +184,7 @@ def dump(args):
 Add an entry to the database with 'assword add'.
 See 'assword help' for more information."""
         sys.exit(10)
-    db = assword.Database(DBPATH)
+    db = open_db()
     results = db.search(query)
     if not os.getenv('ASSWORD_DUMP_PASSWORDS'):
         for index in results.keys():
@@ -220,7 +230,7 @@ def remove(args):
         sys.exit(2)
     if index.find('id:') == 0:
         index = index[3:]
-    db = assword.Database(DBPATH, keyid)
+    db = open_db(keyid)
     if index not in db.entries:
         print >>sys.stderr, "No entry with index", index + "."
         sys.exit(1)
