@@ -40,8 +40,12 @@ If dbpath not specified, empty database will be initialized."""
         self.gpg.armor = True
 
         if self.dbpath and os.path.exists(self.dbpath):
-            cleardata = self._decryptDB(self.dbpath)
-            self.entries = json.loads(cleardata.getvalue())
+            try:
+                cleardata = self._decryptDB(self.dbpath)
+                # FIXME: trap exception if json corrupt
+                self.entries = json.loads(cleardata.getvalue())
+            except IOError as e:
+                raise DatabasePathError(e)
         else:
             self.entries = {}
 
