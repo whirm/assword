@@ -39,6 +39,8 @@ If dbpath not specified, empty database will be initialized."""
                 self.entries = json.loads(cleardata.getvalue())
             except IOError as e:
                 raise DatabaseError(e)
+            except gpgme.GpgmeError as e:
+                raise DatabaseError('Decryption error: %s' % (e[2]))
         else:
             self.entries = {}
 
