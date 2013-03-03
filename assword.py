@@ -3,26 +3,19 @@ import io
 import gpgme
 import json
 import time
+import base64
 import Tkinter
 
-class DatabaseKeyError(Exception):
-    """Indicates no key for encryption."""
-    def __init__(self, msg):
-        self.msg = msg
-    def __str__(self):
-        return repr(self.msg)
+############################################################
 
-class DatabasePathError(Exception):
-    """Indicates no path for database save."""
-    def __init__(self, msg):
-        self.msg = msg
-    def __str__(self):
-        return repr(self.msg)
+def pwgen(bytes):
+    s = os.urandom(bytes)
+    return base64.b64encode(s)
 
-class DatabaseSignatureError(Exception):
-    """Indicates signatures on database file were not fully valid."""
-    def __init__(self, sigs, msg):
-        self.sigs = sigs
+############################################################
+
+class DatabaseError(Exception):
+    def __init__(self, msg):
         self.msg = msg
     def __str__(self):
         return repr(self.msg)
@@ -40,8 +33,14 @@ If dbpath not specified, empty database will be initialized."""
         self.gpg.armor = True
 
         if self.dbpath and os.path.exists(self.dbpath):
-            cleardata = self._decryptDB(self.dbpath)
-            self.entries = json.loads(cleardata.getvalue())
+            try:
+                cleardata = self._decryptDB(self.dbpath)
+                # FIXME: trap exception if json corrupt
+                self.entries = json.loads(cleardata.getvalue())
+            except IOError as e:
+                raise DatabaseError(e)
+            except gpgme.GpgmeError as e:
+                raise DatabaseError('Decryption error: %s' % (e[2]))
         else:
             self.entries = {}
 
@@ -54,7 +53,7 @@ If dbpath not specified, empty database will be initialized."""
                 sigs = self.gpg.decrypt_verify(encdata, data)
         # check signature
         if not sigs[0].validity >= gpgme.VALIDITY_FULL:
-            raise DatabaseSignatureError(sigs, 'Signature on database was not fully valid.')
+            raise DatabaseError(sigs, 'Signature on database was not fully valid.')
         data.seek(0)
         return data
 
@@ -65,7 +64,7 @@ If dbpath not specified, empty database will be initialized."""
             recipient = self.gpg.get_key(keyid or self.keyid)
             signer = self.gpg.get_key(keyid)
         except:
-            raise DatabaseKeyError('GPG could not retrieve encryption key.')
+            raise DatabaseError('Could not retrieve GPG encryption key.')
         self.gpg.signers = [signer]
         encdata = io.BytesIO()
         data.seek(0)
@@ -82,10 +81,15 @@ If dbpath not specified, empty database will be initialized."""
         if not indicies: indicies = [-1]
         return str(max(indicies) + 1)
 
-    def add(self, context, password):
+    def add(self, context, password=None):
         """Add a new entry to the database.
 Database won't be saved to disk until save()."""
         newindex = self._newindex()
+
+        if not password:
+            bytes = int(os.getenv('ASSWORD_PASSWORD', 18))
+            password = pwgen(bytes)
+
         self.entries[newindex] = {}
         self.entries[newindex]['context'] = context
         self.entries[newindex]['password'] = password
@@ -101,14 +105,16 @@ Database won't be saved to disk until save()."""
         """Save database to disk.
 Key ID must either be specified here or at database initialization.
 If path not specified, database will be saved at original dbpath location."""
+        # FIXME: should check that recipient is not different than who
+        # the db was originally encrypted for
         if not keyid:
             keyid = self.keyid
         if not keyid:
-            raise DatabaseKeyError('Key ID for decryption not specified.')
+            raise DatabaseError('Key ID for decryption not specified.')
         if not path:
             path = self.dbpath
         if not path:
-            raise DatabasePathError('Save path not specified.')
+            raise DatabaseError('Save path not specified.')
         cleardata = io.BytesIO(json.dumps(self.entries, sort_keys=True, indent=2))
         encdata = self._encryptDB(cleardata, keyid)
         newpath = path + '.new'
@@ -143,11 +149,12 @@ class Xsearch():
     """Assword X-based query UI."""
     # Lifted largely from: http://code.activestate.com/recipes/410646-tkinter-listbox-example/
 
-    def __init__(self, dbpath, query=None):
+    def __init__(self, dbpath, query=None, keyid=None):
         """Entire action of this class is in initialization.
 May specify initial query with 'query'."""
         self.dbpath = dbpath
         self.query = None
+        self.keyid = keyid
         self.db = None
         self.results = None
         self.selected = None
@@ -169,7 +176,8 @@ See 'assword help' for more information.""")
             # there are none).  Since we don't need to initialize any
             # GUI, return the initialization immediately.
             # See .returnValue().
-            if self.selected:
+            if len(self.results) == 1:
+                self._selectAndReturn(self.results.keys()[0])
                 return
 
         self._winInit()
@@ -189,14 +197,22 @@ See 'assword help' for more information.""")
             return
         self._dbInit()
         self.results = self.db.search(self.query)
-        if len(self.results) == 1:
-            self._selectAndReturn(self.results.keys()[0])
 
     def _winInit(self):
-        self.master = Tkinter.Tk()
+        self.master = Tkinter.Tk(className='assword')
         self.master.title("assword")
         self.main = Tkinter.Frame(self.master)
         self.main.pack(ipadx=5, ipady=5)
+
+    def _centerWindow(self):
+        self.master.update_idletasks()
+        sw = self.master.winfo_screenwidth()
+        sh = self.master.winfo_screenheight()
+        w, h = tuple(int(_) for _ in self.master.geometry().split('+')[0].split('x'))
+        x = (sw - w)/2
+        y = (sh - h)/2
+        geometry = '%dx%d+%d+%d' % (w, h, x, y)
+        self.master.geometry(geometry)
 
     def _errorMessage(self, text):
         Tkinter.Label(self.main, text=text).pack(padx=5, pady=5)
@@ -226,16 +242,28 @@ See 'assword help' for more information.""")
         self.selectList = Tkinter.Listbox(self.select, selectmode=Tkinter.SINGLE)
         self.selectList.bind("<Return>", self._choose)
         self.selectList.bind("<Escape>", self._cancel)
+        self.selectButton = Tkinter.Button(self.select)
+        self.selectButton.bind("<Escape>", self._cancel)
 
     def _selectDisplay(self):
         # clear the listbox
         self.selectList.delete(0, Tkinter.END)
         self.select.pack(padx=5, pady=5, ipadx=2, ipady=2)
+        self.selectButton.pack_forget()
+
+        # allow user to create entry if no results
         if not self.results or len(self.results) == 0:
-            self.selectLabel.config(text="No results found.")
+            self.selectLabel.config(text="""No results found.
+
+Create entry with above string as context:""")
             self.selectList.pack_forget()
+            self.selectButton.config(text="Create", command=self._create)
+            self.selectButton.bind("<Return>", self._create)
+            self.selectButton.pack()
             self.promptEntry.focus_set()
+            self._centerWindow()
             return
+
         self.selectLabel.config(text="Select context:")
         listwidth = 0
         listheight = 0
@@ -252,7 +280,15 @@ See 'assword help' for more information.""")
             height=listheight,
             )
         self.selectList.pack()
+        #self._centerWindow()
         self.selectList.focus_set()
+
+    def _createEntry(self):
+        context = self.query
+        newindex = self.db.add(context)
+        self.db.save(self.keyid)
+        self.results = self.db.search('id:%s' % newindex)
+        self._selectAndReturn(self.results.keys()[0])
 
     ##########
     # These are meant to be bound to key events:
@@ -260,6 +296,9 @@ See 'assword help' for more information.""")
     def _query(self, event=None):
         self._search(self.promptEntry.get())
         self._selectDisplay()
+
+    def _create(self, event=None):
+        self._createEntry()
 
     def _choose(self, event=None):
         item = self.selectList.index(Tkinter.ACTIVE)

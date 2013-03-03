@@ -4,7 +4,6 @@ import os
 import sys
 import getpass
 import json
-import base64
 import gpgme
 import assword
 import subprocess
@@ -42,22 +41,24 @@ its index.
 
 Environment:
 
-  ASSWORD_DB        Path to assword database file (default: ~/.assword/db).
+  ASSWORD_DB        Path to assword database file.  Default: ~/.assword/db
 
-  ASSWORD_KEYID     OpenPGP key ID of database encryption recipient.
-                    If set to path, key ID will be read from file
-                    (default: ~/.assword/keyid).
+  ASSWORD_KEYFILE   File containing OpenPGP key ID of database encryption
+                    recipient.  Default: ~/.assword/keyid
 
-  ASSWORD_PASSWORD  For new entries, length of auto-generated password in
-                    bytes (default: 18).  If set to 'prompt' user will be
-                    prompted for password.
+  ASSWORD_KEYID     OpenPGP key ID of database encryption recipient.  This
+                    overrides ASSWORD_KEYFILE if set.
 
-  ASSWORD_DUMP_PASSWORDS Include passwords in dump when set (default: unset).
+  ASSWORD_PASSWORD  For new entries, length of auto-generated password in bytes
+                    If set to 'prompt' user will be prompted for for password.
+                    Default: 18
 
-  ASSWORD_XPASTE    Method for password retrieval.  Options are: 'xdo'
-                    (default) which attempts to type the password into the
-                    window that had focus on launch, or 'xclip' which inserts
-                    the password in the X clipboard.
+  ASSWORD_DUMP_PASSWORDS Include passwords in dump when set.
+
+  ASSWORD_XPASTE    Method for password retrieval.  Options are: 'xdo', which
+                    attempts to type the password into the window that had
+                    focus on launch, or 'xclip' which inserts the password in
+                    the X clipboard.  Default: xdo
 """
 
 ############################################################
@@ -68,10 +69,6 @@ DBPATH = os.getenv('ASSWORD_DB', os.path.join(ASSWORD_DIR, 'db'))
 
 ############################################################
 
-def pwgen(bytes):
-    s = os.urandom(bytes)
-    return base64.b64encode(s)
-
 def xclip(text):
     p = subprocess.Popen(' '.join(["xclip", "-i"]),
                          shell=True,
@@ -79,14 +76,26 @@ def xclip(text):
     p.communicate(text)
 
 ############################################################
+# Return codes:
+# 2 command line error
+# 3 password error
+# 10 db error
+# 20 gpg/key error
+############################################################
+
+def open_db(keyid=None):
+    try:
+        db = assword.Database(DBPATH, keyid)
+    except assword.DatabaseError as e:
+        print >>sys.stderr, 'Assword database error: %s' % e.msg
+        sys.exit(10)
+    return db
 
 def get_keyid():
     keyid = os.getenv('ASSWORD_KEYID')
-    keyfile = os.path.join(ASSWORD_DIR, 'keyid')
-    if keyid and os.path.exists(keyid):
-        keyfile = keyid
-        keyid = None
-    if os.path.exists(keyfile):
+    keyfile = os.getenv('ASSWORD_KEYFILE', os.path.join(ASSWORD_DIR, 'keyid'))
+
+    if not keyid and os.path.exists(keyfile):
         with open(keyfile, 'r') as f:
             keyid = f.read().strip()
 
@@ -102,14 +111,14 @@ def get_keyid():
             save = True
 
     if not keyid:
-        sys.exit(2)
+        sys.exit(20)
 
     try:
         gpg = gpgme.Context()
         gpg.get_key(keyid)
     except gpgme.GpgmeError:
         print >>sys.stderr, "Invalid key ID:", keyid
-        sys.exit(2)
+        sys.exit(20)
 
     if save:
         if not os.path.isdir(os.path.dirname(keyfile)):
@@ -145,16 +154,17 @@ def add(args):
         context = raw_input('context: ')
     except KeyboardInterrupt:
         sys.exit(-1)
+
+    db = open_db(keyid)
+
     # get password from prompt if requested
     if os.getenv('ASSWORD_PASSWORD') == 'prompt':
         password = password_prompt()
     # otherwise auto generate
     else:
-        print >>sys.stderr, "Auto-generating password...",
-        bytes = int(os.getenv('ASSWORD_PASSWORD', 18))
-        password = pwgen(bytes)
-        print >>sys.stderr, "done."
-    db = assword.Database(DBPATH, keyid)
+        print >>sys.stderr, "Auto-generating password..."
+        password = None
+
     newindex = db.add(context.strip(), password)
     # NOTE: This is what actually saves the new database!
     db.save()
@@ -163,11 +173,11 @@ def add(args):
 def dump(args):
     query = ' '.join(args)
     if not os.path.exists(DBPATH):
-        print >>sys.stderr, """Database file does not exist.
-Add an entry to the database with 'assword add'.
+        print >>sys.stderr, """Assword database does not exist.
+To add an entry to the database use 'assword add'.
 See 'assword help' for more information."""
-        sys.exit(3)
-    db = assword.Database(DBPATH)
+        sys.exit(10)
+    db = open_db()
     results = db.search(query)
     if not os.getenv('ASSWORD_DUMP_PASSWORDS'):
         for index in results.keys():
@@ -192,9 +202,10 @@ def xsearch(args, method='xdo'):
         pass
     else:
         print >>sys.stderr, "Unknown X paste method:", method
-        sys.exit(4)
+        sys.exit(2)
     # do it
-    result = assword.Xsearch(DBPATH, query=query).returnValue()
+    keyid = get_keyid()
+    result = assword.Xsearch(DBPATH, query=query, keyid=keyid).returnValue()
     # type the password in the saved window
     if result:
         if method == 'xdo':
@@ -210,13 +221,13 @@ def remove(args):
         index = args[0]
     except IndexError:
         print >>sys.stderr, "Must specify index to remove."
-        sys.exit(1)
+        sys.exit(2)
     if index.find('id:') == 0:
         index = index[3:]
-    db = assword.Database(DBPATH, keyid)
+    db = open_db(keyid)
     if index not in db.entries:
         print >>sys.stderr, "No entry with index", index + "."
-        sys.exit(5)
+        sys.exit(1)
     try:
         print >>sys.stderr, "Really remove entry " + index + "?  Context:"
         print >>sys.stderr
@@ -237,7 +248,7 @@ def remove(args):
 if len(sys.argv) < 2:
     print >>sys.stderr, "Command not specified."
     usage()
-    sys.exit(1)
+    sys.exit(2)
 
 cmd = sys.argv[1]
 
@@ -256,3 +267,4 @@ else:
     print >>sys.stderr, "Unknown command:", cmd
     print >>sys.stderr
     usage()
+    sys.exit(2)
