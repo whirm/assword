@@ -41,22 +41,24 @@ its index.
 
 Environment:
 
-  ASSWORD_DB        Path to assword database file (default: ~/.assword/db).
+  ASSWORD_DB        Path to assword database file.  Default: ~/.assword/db
 
-  ASSWORD_KEYID     OpenPGP key ID of database encryption recipient.
-                    If set to path, key ID will be read from file
-                    (default: ~/.assword/keyid).
+  ASSWORD_KEYFILE   File containing OpenPGP key ID of database encryption
+                    recipient.  Default: ~/.assword/keyid
 
-  ASSWORD_PASSWORD  For new entries, length of auto-generated password in
-                    bytes (default: 18).  If set to 'prompt' user will be
-                    prompted for password.
+  ASSWORD_KEYID     OpenPGP key ID of database encryption recipient.  This
+                    overrides ASSWORD_KEYFILE if set.
 
-  ASSWORD_DUMP_PASSWORDS Include passwords in dump when set (default: unset).
+  ASSWORD_PASSWORD  For new entries, length of auto-generated password in bytes
+                    If set to 'prompt' user will be prompted for for password.
+                    Default: 18
 
-  ASSWORD_XPASTE    Method for password retrieval.  Options are: 'xdo'
-                    (default) which attempts to type the password into the
-                    window that had focus on launch, or 'xclip' which inserts
-                    the password in the X clipboard.
+  ASSWORD_DUMP_PASSWORDS Include passwords in dump when set.
+
+  ASSWORD_XPASTE    Method for password retrieval.  Options are: 'xdo', which
+                    attempts to type the password into the window that had
+                    focus on launch, or 'xclip' which inserts the password in
+                    the X clipboard.  Default: xdo
 """
 
 ############################################################
@@ -91,11 +93,9 @@ def open_db(keyid=None):
 
 def get_keyid():
     keyid = os.getenv('ASSWORD_KEYID')
-    keyfile = os.path.join(ASSWORD_DIR, 'keyid')
-    if keyid and os.path.exists(keyid):
-        keyfile = keyid
-        keyid = None
-    if os.path.exists(keyfile):
+    keyfile = os.getenv('ASSWORD_KEYFILE', os.path.join(ASSWORD_DIR, 'keyid'))
+
+    if not keyid and os.path.exists(keyfile):
         with open(keyfile, 'r') as f:
             keyid = f.read().strip()
 
