@@ -259,6 +259,7 @@ Create entry with above string as context:""")
             self.selectButton.bind("<Return>", self._create)
             self.selectButton.pack()
             self.promptEntry.focus_set()
+            self._centerWindow()
             return
 
         self.selectLabel.config(text="Select context:")
@@ -277,6 +278,7 @@ Create entry with above string as context:""")
             height=listheight,
             )
         self.selectList.pack()
+        #self._centerWindow()
         self.selectList.focus_set()
 
     def _createEntry(self):
