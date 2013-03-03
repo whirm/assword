@@ -105,6 +105,8 @@ Database won't be saved to disk until save()."""
         """Save database to disk.
 Key ID must either be specified here or at database initialization.
 If path not specified, database will be saved at original dbpath location."""
+        # FIXME: should check that recipient is not different than who
+        # the db was originally encrypted for
         if not keyid:
             keyid = self.keyid
         if not keyid:
