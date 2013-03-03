@@ -1,0 +1,11 @@
+#!/bin/bash
+
+TDIR=$(dirname $0)
+RDIR="$TDIR"/..
+
+export PYTHONPATH="$RDIR"
+
+export ASSWORD_DB="$TDIR"/db
+export ASSWORD_KEYID="$TDIR"/keyid
+
+"$RDIR"/assword "$@"
