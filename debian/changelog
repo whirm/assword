@@ -1,8 +1,10 @@
-assword (0.4-2) unstable; urgency=low
+assword (0.5-1) unstable; urgency=low
 
-  * minor packaging cleanup
+  * New release, fixes versioning information.
+  * minor packaging cleanup, bumping to debhelper compat level 9
+  * added placeholder assword(1) man page via help2man
 
- -- Daniel Kahn Gillmor <dkg@fifthhorseman.net>  Tue, 05 Mar 2013 12:45:50 -0500
+ -- Daniel Kahn Gillmor <dkg@fifthhorseman.net>  Tue, 05 Mar 2013 14:03:52 -0500
 
 assword (0.4-1) unstable; urgency=low
 
