@@ -7,10 +7,14 @@ import json
 import gpgme
 import assword
 import subprocess
+import pkg_resources
 
 ############################################################
 
 PROG = os.path.basename(sys.argv[0])
+
+def version():
+    print PROG, pkg_resources.get_distribution('assword').version
 
 def usage():
     print "Usage:", PROG, "<command> [<args>...]"
@@ -33,6 +37,8 @@ Commands:
                      according to the ASSWORD_XPASTE method.
 
   remove [id:]<id>   Delete an entry from the database by index.
+
+  version            Report the version of this program.
 
   help               This help.
 
@@ -261,7 +267,9 @@ elif cmd == 'xsearch':
     xsearch(sys.argv[2:], method=method)
 elif cmd == 'remove':
     remove(sys.argv[2:])
-elif cmd == 'help':
+elif cmd == 'version' or cmd == '--version':
+    version()
+elif cmd == 'help' or cmd == '--help':
     usage()
 else:
     print >>sys.stderr, "Unknown command:", cmd
