@@ -15,6 +15,7 @@ setup(
         'gpgme',
         'getpass',
         'json',
-        'base64'
+        'base64',
+        'Tkinter'
         ],
     )
