@@ -2,15 +2,16 @@ Source: assword
 Section: python
 Priority: optional
 Maintainer: Jameson Rollins <jrollins@finestructure.net>
+Uploaders: Daniel Kahn Gillmor <dkg@fifthhorseman.net>
 Build-Depends:
  pkg-config,
- python-all-dev (>= 2.6.6-3~),
+ python,
  python-setuptools,
- debhelper (>= 8.0.0)
+ debhelper (>= 9)
 Standards-Version: 3.9.3
 
 Package: assword
-Architecture: any
+Architecture: all
 Depends:
  ${shlibs:Depends},
  ${misc:Depends},
