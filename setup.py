@@ -16,6 +16,7 @@ setup(
         'getpass',
         'json',
         'base64',
-        'Tkinter'
+        'Tkinter',
+        'pkg_resources',
         ],
     )
