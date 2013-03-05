@@ -15,7 +15,6 @@ setup(
         'gpgme',
         'getpass',
         'json',
-        'base64',
-        'xdo'
+        'base64'
         ],
     )
