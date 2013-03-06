@@ -199,7 +199,7 @@ def xsearch(args, method='xdo'):
         except:
             print >>sys.stderr, "The xdo module is not found, so the 'xdo' paste method is not available."
             print >>sys.stderr, "Please install python-xdo."
-            sys.exit()
+            sys.exit(1)
         # initialize xdo
         x = xdo.xdo()
         # get the id of the currently focused window
