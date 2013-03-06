@@ -83,8 +83,7 @@ def xclip(text):
 
 ############################################################
 # Return codes:
-# 2 command line error
-# 3 password error
+# 1 command/load line error
 # 10 db error
 # 20 gpg/key error
 ############################################################
@@ -140,7 +139,7 @@ def password_prompt():
         password1 = getpass.getpass('reenter password: ')
         if password0 != password1:
             print >>sys.stderr, "Error: Passwords do not match.  Aborting."
-            sys.exit(3)
+            sys.exit(1)
         return password0
     except KeyboardInterrupt:
         sys.exit(-1)
@@ -208,7 +207,7 @@ def xsearch(args, method='xdo'):
         pass
     else:
         print >>sys.stderr, "Unknown X paste method:", method
-        sys.exit(2)
+        sys.exit(1)
     # do it
     keyid = get_keyid()
     result = assword.Xsearch(DBPATH, query=query, keyid=keyid).returnValue()
@@ -227,7 +226,7 @@ def remove(args):
         index = args[0]
     except IndexError:
         print >>sys.stderr, "Must specify index to remove."
-        sys.exit(2)
+        sys.exit(1)
     if index.find('id:') == 0:
         index = index[3:]
     db = open_db(keyid)
@@ -254,7 +253,7 @@ def remove(args):
 if len(sys.argv) < 2:
     print >>sys.stderr, "Command not specified."
     usage()
-    sys.exit(2)
+    sys.exit(1)
 
 cmd = sys.argv[1]
 
@@ -275,4 +274,4 @@ else:
     print >>sys.stderr, "Unknown command:", cmd
     print >>sys.stderr
     usage()
-    sys.exit(2)
+    sys.exit(1)
