@@ -1,11 +1,18 @@
+#!/usr/bin/make -f
 # -*- makefile -*-
 
 VERSION:=$(shell git describe --tags | sed -e s/_/~/ -e s/-/+/ -e s/-/~/)
 
-.PHONY: all
-all:
+all: assword.1
 
-.PHONY: debian-snapshot
+assword.1: assword
+	help2man ./assword -N -n 'Simple and secure password database and retrieval system' -o $@
+
+.PHONY: all debian-snapshot clean
+
+clean:
+	rm -f assword.1
+
 debian-snapshot:
 	rm -rf build/deb
 	mkdir -p build/deb/debian
