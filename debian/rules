@@ -3,5 +3,5 @@
 %:
 	dh $@ --with python2 --buildsystem=python_distutils
 override_dh_installman:
-	help2man ./assword -N -n 'Simple and secure password database and retrieval system' > debian/assword.1 
+	make assword.1
 	dh_installman
