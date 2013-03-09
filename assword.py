@@ -8,6 +8,8 @@ import Tkinter
 
 ############################################################
 
+DEFAULT_NEW_PASSWORD_OCTETS=18
+
 def pwgen(bytes):
     s = os.urandom(bytes)
     return base64.b64encode(s)
@@ -87,7 +89,8 @@ Database won't be saved to disk until save()."""
         newindex = self._newindex()
 
         if not password:
-            bytes = int(os.getenv('ASSWORD_PASSWORD', 18))
+            bytes = int(os.getenv('ASSWORD_PASSWORD', DEFAULT_NEW_PASSWORD_OCTETS))
+            print "bytes: %d"%(bytes)
             password = pwgen(bytes)
 
         self.entries[newindex] = {}

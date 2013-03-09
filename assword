@@ -55,9 +55,10 @@ Environment:
   ASSWORD_KEYID     OpenPGP key ID of database encryption recipient.  This
                     overrides ASSWORD_KEYFILE if set.
 
-  ASSWORD_PASSWORD  For new entries, length of auto-generated password in bytes
-                    If set to 'prompt' user will be prompted for for password.
-                    Default: 18
+  ASSWORD_PASSWORD  For new entries, entropy of auto-generated password
+                    in bytes (actual generated password will be longer
+                    due to base64 encoding). If set to 'prompt' user
+                    will be prompted for for password.  Default: %d
 
   ASSWORD_DUMP_PASSWORDS Include passwords in dump when set.
 
@@ -65,7 +66,7 @@ Environment:
                     attempts to type the password into the window that had
                     focus on launch, or 'xclip' which inserts the password in
                     the X clipboard.  Default: xdo
-"""
+"""%(assword.DEFAULT_NEW_PASSWORD_OCTETS)
 
 ############################################################
 
