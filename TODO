@@ -1,0 +1,18 @@
+ * ENHANCEMENT: when dialog box redisplays for creating new password,
+   it changes position (to be centered).  it should probably always
+   try to hint at being centered instead of jumping around.
+
+ * BUG: when creating a new password with the dialog box, the context field
+   is still editable.  however, if i edit it, and then click "create",
+   the password is created with the original contents, not the
+   contents of the field at the time of clicking "create".
+
+ * ENHANCEMENT: xdo has two input methods -- one based on XSendEvent,
+   and one based on injecting keystrokes into the X session as a whole
+   (the difference is whether a window ID parameter is passed to
+   "type").  We use the latter right now in xsearch despite its
+   possibility of leakage because some X11 applications ignore
+   XSendEvent input.  Provide some hinting mechanism derived from the
+   window in question to conditionally enable XSendEvent instead.
+
+ * ENHANCEMENT: test suite!
