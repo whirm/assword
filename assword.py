@@ -143,6 +143,12 @@ If query is None, all entries will be returned.  Special query
                 mset[index] = entry
         return mset
 
+    def __getitem__(self, index):
+        '''Return database item based on id''' 
+        if type(index) is int:
+            index = "%d"%(index)
+        return self.entries[index]
+
 ############################################################
 
 class Xsearch():
