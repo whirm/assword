@@ -16,3 +16,10 @@
    window in question to conditionally enable XSendEvent instead.
 
  * ENHANCEMENT: test suite!
+
+ * ENHANCEMENT: be able to edit a context once it is created.  for
+   example, i often create a password when setting up an account on a
+   remote web site.  Some account signup workflows don't tell me if
+   the account name i wanted was taken until after i've signed up.  By
+   then, i've created the password, and i want to adjust it manually.
+
