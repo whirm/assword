@@ -1,6 +1,7 @@
- * ENHANCEMENT: when dialog box redisplays for creating new password,
-   it changes position (to be centered).  it should probably always
-   try to hint at being centered instead of jumping around.
+ * BUG: when dialog box redisplays for creating new password, it
+   changes position (to be centered).  it should probably always try
+   to hint at being centered instead of jumping around.  (jamie tried
+   to get it to keep the window centered but failed).
 
  * BUG: when creating a new password with the dialog box, the context field
    is still editable.  however, if i edit it, and then click "create",
@@ -14,6 +15,8 @@
    possibility of leakage because some X11 applications ignore
    XSendEvent input.  Provide some hinting mechanism derived from the
    window in question to conditionally enable XSendEvent instead.
+
+ * ENHANCEMENT: add iterator to db class?
 
  * ENHANCEMENT: test suite!
 
