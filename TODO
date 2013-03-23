@@ -21,3 +21,5 @@
    the account name i wanted was taken until after i've signed up.  By
    then, i've created the password, and i want to adjust it manually.
 
+ * ENHANCEMENT: can we use python clipboard bindings instead of
+   "xclip -i"?
