@@ -296,7 +296,7 @@ Create entry with above string as context:""")
         context = self.promptEntry.get()
         newindex = self.db.add(context)
         self.db.save(self.keyid)
-        self.results = self.db.search('id:%s' % newindex)
+        self.results = self.db[newindex]
         self._selectAndReturn(self.results.keys()[0])
 
     ##########
