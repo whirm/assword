@@ -293,7 +293,7 @@ Create entry with above string as context:""")
         self.selectList.focus_set()
 
     def _createEntry(self):
-        context = self.query
+        context = self.promptEntry.get()
         newindex = self.db.add(context)
         self.db.save(self.keyid)
         self.results = self.db.search('id:%s' % newindex)
