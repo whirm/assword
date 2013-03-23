@@ -167,6 +167,8 @@ May specify initial query with 'query'."""
         self.db = None
         self.results = None
         self.selected = None
+        self.master = None
+        self.main = None
 
         if not os.path.exists(self.dbpath):
             self._winInit()
@@ -323,11 +325,11 @@ Create entry with above string as context:""")
         self._die()
 
     def _die(self):
-        if 'main' in dir(self):
+        if self.main:
             self.main.destroy()
 
     def returnValue(self):
         """Return user-selected search result of database query."""
-        if 'master' in dir(self):
+        if self.master:
             self.master.wait_window(self.main)
         return self.selected
