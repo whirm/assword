@@ -1,8 +1,3 @@
- * BUG: when dialog box redisplays for creating new password, it
-   changes position (to be centered).  it should probably always try
-   to hint at being centered instead of jumping around.  (jamie tried
-   to get it to keep the window centered but failed).
-
  * ENHANCEMENT: xdo has two input methods -- one based on XSendEvent,
    and one based on injecting keystrokes into the X session as a whole
    (the difference is whether a window ID parameter is passed to
