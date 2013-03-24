@@ -228,6 +228,7 @@ class Xsearch:
         self.entry.connect("changed", self.updatecreate)
         self.createbutton.connect("clicked", self.create)
         self.window.connect("destroy", self.destroy)
+        self.window.connect("key-press-event", self.keypress)
     
         self.entry.show()
         self.label.show()
@@ -236,6 +237,10 @@ class Xsearch:
         self.createbutton.show()
         self.updatecreate(self.entry)
         self.window.show()
+
+    def keypress(self, widget, event):
+        if event.keyval == gtk.keysyms.Escape:
+            gtk.main_quit()
 
     def updatecreate(self, widget, data=None):
         e = self.entry.get_text()
