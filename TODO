@@ -22,3 +22,26 @@
  * ENHANCEMENT: on xsearch if selected window is known browser, and
    it's possible to extract url, preseed context search with hostname
    of url.
+
+ * ENHANCEMENT: xsearch create action should modify the database, move
+   the user's focus back into the textentry (highlighting the whole
+   entry text), disable the "Create" button, and *not* explicitly
+   select and terminate.  The user can then select in the usual way
+   (pressing enter) or can continue without selecting.
+
+ * ENHANCEMENT: review the label texts and make sure they're saying
+   reasonable things in different parts of the workflow.
+
+ * ENHANCEMENT: ctrl+del from xsearch when a matching context is
+   present should allow deletion of the indicated password.  This
+   should probably prompt for confirmation.
+
+ * ENHANCEMENT: ctrl+e from xsearch when a matching context is present
+   should display another entry with the context's password in it; the
+   user can then edit the password to adjust for stupid web site
+   rules.  the rest of the UI should be disabled
+   (set_sensitive(False)) while this password editor is active.
+
+ * ENHANCEMENT: consider how to deal with multiple DB backends, and
+   post-save and pre-open hooks (e.g. to push to and fetch from a
+   remote repository of these changes)
