@@ -4,9 +4,15 @@ import gpgme
 import json
 import time
 import base64
-import Tkinter
+import datetime
+import pygtk
+pygtk.require('2.0')
+import gtk
+import gobject
 
 ############################################################
+
+DEFAULT_NEW_PASSWORD_OCTETS=18
 
 def pwgen(bytes):
     s = os.urandom(bytes)
@@ -29,6 +35,11 @@ If dbpath not specified, empty database will be initialized."""
         self.dbpath = dbpath
         self.keyid = keyid
 
+        # default database information
+        self.type = 'assword'
+        self.version = 1
+        self.entries = {}
+
         self.gpg = gpgme.Context()
         self.gpg.armor = True
 
@@ -36,13 +47,18 @@ If dbpath not specified, empty database will be initialized."""
             try:
                 cleardata = self._decryptDB(self.dbpath)
                 # FIXME: trap exception if json corrupt
-                self.entries = json.loads(cleardata.getvalue())
+                jsondata = json.loads(cleardata.getvalue())
             except IOError as e:
                 raise DatabaseError(e)
             except gpgme.GpgmeError as e:
                 raise DatabaseError('Decryption error: %s' % (e[2]))
-        else:
-            self.entries = {}
+
+            # unpack the json data
+            if 'type' not in jsondata or jsondata['type'] != self.type:
+                raise DatabaseError('Database is not a proper assword database.')
+            if 'version' not in jsondata or jsondata['version'] != self.version:
+                raise DatabaseError('Incompatible database.')
+            self.entries = jsondata['entries']
 
     def _decryptDB(self, path):
         data = io.BytesIO()
@@ -62,7 +78,7 @@ If dbpath not specified, empty database will be initialized."""
         # FIXME: should these be separated?
         try:
             recipient = self.gpg.get_key(keyid or self.keyid)
-            signer = self.gpg.get_key(keyid)
+            signer = self.gpg.get_key(keyid or self.keyid)
         except:
             raise DatabaseError('Could not retrieve GPG encryption key.')
         self.gpg.signers = [signer]
@@ -75,31 +91,22 @@ If dbpath not specified, empty database will be initialized."""
         encdata.seek(0)
         return encdata
 
-    def _newindex(self):
-        # Return a potential new entry index.
-        indicies = [int(index) for index in self.entries.keys()]
-        if not indicies: indicies = [-1]
-        return str(max(indicies) + 1)
-
     def add(self, context, password=None):
         """Add a new entry to the database.
 Database won't be saved to disk until save()."""
-        newindex = self._newindex()
-
         if not password:
-            bytes = int(os.getenv('ASSWORD_PASSWORD', 18))
+            bytes = int(os.getenv('ASSWORD_PASSWORD', DEFAULT_NEW_PASSWORD_OCTETS))
             password = pwgen(bytes)
 
-        self.entries[newindex] = {}
-        self.entries[newindex]['context'] = context
-        self.entries[newindex]['password'] = password
-        self.entries[newindex]['date'] = int(time.time())
-        return newindex
+        e = {'password': password,
+             'date': datetime.datetime.now().isoformat()}
+        self.entries[context] = e
+        return e
 
-    def remove(self, index):
+    def remove(self, context):
         """Remove an entry from the database.
 Database won't be saved to disk until save()."""
-        del self.entries[index]
+        del self.entries[context]
 
     def save(self, keyid=None, path=None):
         """Save database to disk.
@@ -115,7 +122,10 @@ If path not specified, database will be saved at original dbpath location."""
             path = self.dbpath
         if not path:
             raise DatabaseError('Save path not specified.')
-        cleardata = io.BytesIO(json.dumps(self.entries, sort_keys=True, indent=2))
+        jsondata = {'type': self.type,
+                    'version': self.version,
+                    'entries': self.entries}
+        cleardata = io.BytesIO(json.dumps(jsondata, indent=2))
         encdata = self._encryptDB(cleardata, keyid)
         newpath = path + '.new'
         bakpath = path + '.bak'
@@ -126,199 +136,125 @@ If path not specified, database will be saved at original dbpath location."""
         os.rename(newpath, path)
 
     def search(self, query=None):
-        """Search the 'context' fields of database entries for string.
-If query is None, all entries will be returned.  Special query
-'id:<id>' will return single entry."""
-        if query.find('id:') == 0:
-            index = query[3:]
-            if index in self.entries:
-                return {index: self.entries[index]}
+        """Search for query in contexts.
+If query is None, all entries will be returned."""
         mset = {}
-        for index, entry in self.entries.iteritems():
-            if query:
-                if entry['context'] and query in entry['context']:
-                    mset[index] = entry
-                    continue
-            else:
-                mset[index] = entry
+        for context, entry in self.entries.iteritems():
+            # simple substring match
+            if query in context:
+                mset[context] = entry
         return mset
 
+    def __getitem__(self, context):
+        '''Return database entry for exact context'''
+        return self.entries[context]
+
 ############################################################
+    
+# Assumes that the func_data is set to the number of the text column in the
+# model.
+def match_func(completion, key, iter, column):
+    model = completion.get_model()
+    text = model[iter][column]
+    if text.lower().find(key.lower()) > -1:
+        return True
+    return False
 
-class Xsearch():
+class Xsearch:
     """Assword X-based query UI."""
-    # Lifted largely from: http://code.activestate.com/recipes/410646-tkinter-listbox-example/
+    def __init__(self, db, query=None):
 
-    def __init__(self, dbpath, query=None, keyid=None):
-        """Entire action of this class is in initialization.
-May specify initial query with 'query'."""
-        self.dbpath = dbpath
+        self.db = db
         self.query = None
-        self.keyid = keyid
-        self.db = None
         self.results = None
         self.selected = None
-
-        if not os.path.exists(self.dbpath):
-            self._winInit()
-            self._errorMessage("""Password database does not exist.
-Add passwords to the database from the command line with 'assword add'.
-See 'assword help' for more information.""")
-            return
+        self.window = None
+        self.entry = None
+        self.label = None
 
         if query:
             # If we have an intial query, directly do a search without
             # initializing any X objects.  This will initialize the
             # database and potentially return entries.
-            self._search(query)
+            r = self.db.search(query)
             # If only a single entry is found, _search() will set the
             # result and attempt to close any X objects (of which
             # there are none).  Since we don't need to initialize any
             # GUI, return the initialization immediately.
             # See .returnValue().
-            if len(self.results) == 1:
-                self._selectAndReturn(self.results.keys()[0])
+            if len(r) == 1:
+                self.selected = r[r.keys()[0]]
                 return
 
-        self._winInit()
-        self._promptDisplay()
-        self._selectInit()
-        if self.query:
-            self._query()
+        self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        self.window.set_border_width(10)
 
-    def _dbInit(self):
-        if not self.db:
-            self.db = Database(self.dbpath)
+        self.entry = gtk.Entry()
+        if query:
+            self.entry.set_text(query)
+        completion = gtk.EntryCompletion()
+        self.entry.set_completion(completion)
+        liststore = gtk.ListStore(gobject.TYPE_STRING)
+        completion.set_model(liststore)
+        completion.set_text_column(0)
+        completion.set_match_func(match_func, 0) # 0 is column number
+        for context in self.db.entries:
+            liststore.append([context])
+        hbox = gtk.HBox()
+        vbox = gtk.VBox()
+        self.createbutton = gtk.Button("Create")
+        self.label = gtk.Label("enter the context for the password you want:")
+        self.window.add(vbox)
 
-    def _search(self, query):
-        self.query = query
-        if query == '':
-            self.results = None
-            return
-        self._dbInit()
-        self.results = self.db.search(self.query)
+        vbox.add(self.label)
+        vbox.add(hbox)
+        hbox.add(self.entry)
+        hbox.add(self.createbutton)
 
-    def _winInit(self):
-        self.master = Tkinter.Tk(className='assword')
-        self.master.title("assword")
-        self.main = Tkinter.Frame(self.master)
-        self.main.pack(ipadx=5, ipady=5)
+        self.entry.connect("activate", self.enter)
+        self.entry.connect("changed", self.updatecreate)
+        self.createbutton.connect("clicked", self.create)
+        self.window.connect("destroy", self.destroy)
+        self.window.connect("key-press-event", self.keypress)
+    
+        self.entry.show()
+        self.label.show()
+        vbox.show()
+        hbox.show()
+        self.createbutton.show()
+        self.updatecreate(self.entry)
+        self.window.show()
 
-    def _centerWindow(self):
-        self.master.update_idletasks()
-        sw = self.master.winfo_screenwidth()
-        sh = self.master.winfo_screenheight()
-        w, h = tuple(int(_) for _ in self.master.geometry().split('+')[0].split('x'))
-        x = (sw - w)/2
-        y = (sh - h)/2
-        geometry = '%dx%d+%d+%d' % (w, h, x, y)
-        self.master.geometry(geometry)
+    def keypress(self, widget, event):
+        if event.keyval == gtk.keysyms.Escape:
+            gtk.main_quit()
 
-    def _errorMessage(self, text):
-        Tkinter.Label(self.main, text=text).pack(padx=5, pady=5)
-        button = Tkinter.Button(self.main, text="OK", command=self._cancel)
-        button.pack()
-        button.bind("<Return>", self._cancel)
-        button.bind("<Escape>", self._cancel)
-        button.focus_set()
+    def updatecreate(self, widget, data=None):
+        e = self.entry.get_text()
+        self.createbutton.set_sensitive(e != '' and e not in self.db.entries)
 
-    def _promptDisplay(self):
-        self.prompt = Tkinter.Frame(self.master)
-        self.promptLabel = Tkinter.Label(self.prompt, text="Password search:")
-        self.promptLabel.pack(pady=2)
-        self.promptEntry = Tkinter.Entry(self.prompt)
-        if self.query:
-            self.promptEntry.insert(0, self.query)
-        self.promptEntry.pack()
-        self.promptEntry.bind("<Return>", self._query)
-        self.promptEntry.bind("<Escape>", self._cancel)
-        self.prompt.pack(padx=5, pady=5, ipadx=2, ipady=2)
-        self.promptEntry.focus_set()
+    def enter(self, widget, data=None):
+        e = self.entry.get_text()
+        if e in self.db.entries:
+            self.selected = self.db[e]
+            if self.selected is None:
+                self.label.set_text("weird -- no context found even though we thought there should be one")
+            else:
+                gtk.main_quit()
+        else:
+            self.label.set_text("no match")
 
-    def _selectInit(self):
-        self.select = Tkinter.Frame(self.master)
-        self.selectLabel = Tkinter.Label(self.select)
-        self.selectLabel.pack(pady=2)
-        self.selectList = Tkinter.Listbox(self.select, selectmode=Tkinter.SINGLE)
-        self.selectList.bind("<Return>", self._choose)
-        self.selectList.bind("<Escape>", self._cancel)
-        self.selectButton = Tkinter.Button(self.select)
-        self.selectButton.bind("<Escape>", self._cancel)
+    def create(self, widget, data=None):
+        e = self.entry.get_text()
+        id = self.db.add(e)
+        self.selected = self.db[id]
+        self.db.save()
+        gtk.main_quit()
 
-    def _selectDisplay(self):
-        # clear the listbox
-        self.selectList.delete(0, Tkinter.END)
-        self.select.pack(padx=5, pady=5, ipadx=2, ipady=2)
-        self.selectButton.pack_forget()
-
-        # allow user to create entry if no results
-        if not self.results or len(self.results) == 0:
-            self.selectLabel.config(text="""No results found.
-
-Create entry with above string as context:""")
-            self.selectList.pack_forget()
-            self.selectButton.config(text="Create", command=self._create)
-            self.selectButton.bind("<Return>", self._create)
-            self.selectButton.pack()
-            self.promptEntry.focus_set()
-            self._centerWindow()
-            return
-
-        self.selectLabel.config(text="Select context:")
-        listwidth = 0
-        listheight = 0
-        # we need a list to store indices of entries in selector
-        self.indices = []
-        for index, entry in sorted(self.results.iteritems()):
-            self.indices.append(index)
-            text = "%s" % (entry['context'])
-            listwidth = max(listwidth, len(text))
-            listheight += 1
-            self.selectList.insert(Tkinter.END, text)
-        self.selectList.config(
-            width=listwidth,
-            height=listheight,
-            )
-        self.selectList.pack()
-        #self._centerWindow()
-        self.selectList.focus_set()
-
-    def _createEntry(self):
-        context = self.query
-        newindex = self.db.add(context)
-        self.db.save(self.keyid)
-        self.results = self.db.search('id:%s' % newindex)
-        self._selectAndReturn(self.results.keys()[0])
-
-    ##########
-    # These are meant to be bound to key events:
-
-    def _query(self, event=None):
-        self._search(self.promptEntry.get())
-        self._selectDisplay()
-
-    def _create(self, event=None):
-        self._createEntry()
-
-    def _choose(self, event=None):
-        item = self.selectList.index(Tkinter.ACTIVE)
-        self._selectAndReturn(self.indices[item])
-
-    def _cancel(self, event=None):
-        self._die()
-
-    ##########
-
-    def _selectAndReturn(self, index):
-        self.selected = self.results[str(index)]
-        self._die()
-
-    def _die(self):
-        if 'main' in dir(self):
-            self.main.destroy()
+    def destroy(self, widget, data=None):
+        gtk.main_quit()
 
     def returnValue(self):
-        """Return user-selected search result of database query."""
-        if 'master' in dir(self):
-            self.master.wait_window(self.main)
+        if self.selected is None:
+            gtk.main()
         return self.selected

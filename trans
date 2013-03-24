@@ -1,0 +1,26 @@
+#!/usr/bin/env python
+
+import sys
+import os
+import assword
+import datetime
+
+oldpath = sys.argv[1]
+newpath = sys.argv[2]
+
+if os.path.exists(newpath):
+    print >>sys.stderr, 'new db path already exists. aborting.'
+    sys.exit()
+
+keyid = os.getenv('GPGID')
+
+olddb = assword.Database(oldpath, keyid)
+newdb = assword.Database(newpath, keyid)
+
+for id, entry in olddb.entries.iteritems():
+    context = entry['context']
+    password = entry['password']
+    date = datetime.datetime.fromtimestamp(entry['date']).isoformat()
+    newdb.entries[context] = {'password': password, 'date': date}
+
+newdb.save()

@@ -31,10 +31,12 @@ Commands:
 
   xsearch [<string>] X search interface, good for X window manager integration.
                      If string is not specified a search prompt will be
-                     displayed.  If multiple results for query are available a
-                     context selection list will be presented.  When a single
-                     result is available, the password will be retrieved
-                     according to the ASSWORD_XPASTE method.
+                     displayed.  All matching results for the query will be
+                     presented to the user.  When a result is selected, the
+                     password will be retrieved according to the method
+                     specified by ASSWORD_XPASTE.  If no match is found, the
+                     user has the opportunity to generate and store a new
+                     password, which is then delivered via ASSWORD_XPASTE.
 
   remove [id:]<id>   Delete an entry from the database by index.
 
@@ -55,9 +57,10 @@ Environment:
   ASSWORD_KEYID     OpenPGP key ID of database encryption recipient.  This
                     overrides ASSWORD_KEYFILE if set.
 
-  ASSWORD_PASSWORD  For new entries, length of auto-generated password in bytes
-                    If set to 'prompt' user will be prompted for for password.
-                    Default: 18
+  ASSWORD_PASSWORD  For new entries, entropy of auto-generated password
+                    in bytes (actual generated password will be longer
+                    due to base64 encoding). If set to 'prompt' user
+                    will be prompted for for password.  Default: %d
 
   ASSWORD_DUMP_PASSWORDS Include passwords in dump when set.
 
@@ -65,7 +68,7 @@ Environment:
                     attempts to type the password into the window that had
                     focus on launch, or 'xclip' which inserts the password in
                     the X clipboard.  Default: xdo
-"""
+"""%(assword.DEFAULT_NEW_PASSWORD_OCTETS)
 
 ############################################################
 
@@ -170,10 +173,10 @@ def add(args):
         print >>sys.stderr, "Auto-generating password..."
         password = None
 
-    newindex = db.add(context.strip(), password)
+    db.add(context.strip(), password)
     # NOTE: This is what actually saves the new database!
     db.save()
-    print >>sys.stderr, "Wrote new entry: id:" + newindex
+    print >>sys.stderr, "New entry writen."
 
 def dump(args):
     query = ' '.join(args)
@@ -184,10 +187,13 @@ See 'assword help' for more information."""
         sys.exit(10)
     db = open_db()
     results = db.search(query)
-    if not os.getenv('ASSWORD_DUMP_PASSWORDS'):
-        for index in results.keys():
-            results[index]['password'] = ''
-    print json.dumps(results, sort_keys=True, indent=2)
+    output = {}
+    for context in results:
+        output[context] = {}
+        output[context]['date'] = results[context]['date']
+        if os.getenv('ASSWORD_DUMP_PASSWORDS'):
+            output[context]['password'] = results[context]['password']
+    print json.dumps(output, sort_keys=True, indent=2)
 
 # The X GUI
 def xsearch(args, method='xdo'):
@@ -210,7 +216,8 @@ def xsearch(args, method='xdo'):
         sys.exit(1)
     # do it
     keyid = get_keyid()
-    result = assword.Xsearch(DBPATH, query=query, keyid=keyid).returnValue()
+    db = open_db(keyid)
+    result = assword.Xsearch(db, query=query).returnValue()
     # type the password in the saved window
     if result:
         if method == 'xdo':
@@ -223,29 +230,24 @@ def xsearch(args, method='xdo'):
 def remove(args):
     keyid = get_keyid()
     try:
-        index = args[0]
+        context = args[0]
     except IndexError:
         print >>sys.stderr, "Must specify index to remove."
         sys.exit(1)
-    if index.find('id:') == 0:
-        index = index[3:]
     db = open_db(keyid)
-    if index not in db.entries:
-        print >>sys.stderr, "No entry with index", index + "."
+    if context not in db.entries:
+        print >>sys.stderr, "No entry with context '%s'." % (context)
         sys.exit(1)
     try:
-        print >>sys.stderr, "Really remove entry " + index + "?  Context:"
-        print >>sys.stderr
-        print >>sys.stderr, db.entries[index]['context']
-        print >>sys.stderr
+        print >>sys.stderr, "Really remove entry '%s'?" % (context)
         response = raw_input("Type 'yes' to remove: ")
     except KeyboardInterrupt:
         sys.exit(-1)
     if response != 'yes':
         sys.exit(-1)
-    db.remove(index)
+    db.remove(context)
     db.save()
-    print >>sys.stderr, "Removed entry: id:" + index
+    print >>sys.stderr, "Entry removed."
 
 ############################################################
 # Basically main()
