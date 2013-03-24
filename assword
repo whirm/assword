@@ -173,10 +173,10 @@ def add(args):
         print >>sys.stderr, "Auto-generating password..."
         password = None
 
-    newindex = db.add(context.strip(), password)
+    db.add(context.strip(), password)
     # NOTE: This is what actually saves the new database!
     db.save()
-    print >>sys.stderr, "Wrote new entry: id:" + newindex
+    print >>sys.stderr, "New entry writen."
 
 def dump(args):
     query = ' '.join(args)
@@ -187,10 +187,13 @@ See 'assword help' for more information."""
         sys.exit(10)
     db = open_db()
     results = db.search(query)
-    if not os.getenv('ASSWORD_DUMP_PASSWORDS'):
-        for index in results.keys():
-            results[index]['password'] = ''
-    print json.dumps(results, sort_keys=True, indent=2)
+    output = {}
+    for context in results:
+        output[context] = {}
+        output[context]['date'] = results[context]['date']
+        if os.getenv('ASSWORD_DUMP_PASSWORDS'):
+            output[context]['password'] = results[context]['password']
+    print json.dumps(output, sort_keys=True, indent=2)
 
 # The X GUI
 def xsearch(args, method='xdo'):
@@ -226,29 +229,24 @@ def xsearch(args, method='xdo'):
 def remove(args):
     keyid = get_keyid()
     try:
-        index = args[0]
+        context = args[0]
     except IndexError:
         print >>sys.stderr, "Must specify index to remove."
         sys.exit(1)
-    if index.find('id:') == 0:
-        index = index[3:]
     db = open_db(keyid)
-    if index not in db.entries:
-        print >>sys.stderr, "No entry with index", index + "."
+    if context not in db.entries:
+        print >>sys.stderr, "No entry with context '%s'." % (context)
         sys.exit(1)
     try:
-        print >>sys.stderr, "Really remove entry " + index + "?  Context:"
-        print >>sys.stderr
-        print >>sys.stderr, db.entries[index]['context']
-        print >>sys.stderr
+        print >>sys.stderr, "Really remove entry '%s'?" % (context)
         response = raw_input("Type 'yes' to remove: ")
     except KeyboardInterrupt:
         sys.exit(-1)
     if response != 'yes':
         sys.exit(-1)
-    db.remove(index)
+    db.remove(context)
     db.save()
-    print >>sys.stderr, "Removed entry: id:" + index
+    print >>sys.stderr, "Entry removed."
 
 ############################################################
 # Basically main()

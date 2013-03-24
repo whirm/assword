@@ -31,6 +31,11 @@ If dbpath not specified, empty database will be initialized."""
         self.dbpath = dbpath
         self.keyid = keyid
 
+        # default database information
+        self.type = 'assword'
+        self.version = 1
+        self.entries = {}
+
         self.gpg = gpgme.Context()
         self.gpg.armor = True
 
@@ -38,13 +43,21 @@ If dbpath not specified, empty database will be initialized."""
             try:
                 cleardata = self._decryptDB(self.dbpath)
                 # FIXME: trap exception if json corrupt
-                self.entries = json.loads(cleardata.getvalue())
+                jsondata = json.loads(cleardata.getvalue())
             except IOError as e:
                 raise DatabaseError(e)
             except gpgme.GpgmeError as e:
                 raise DatabaseError('Decryption error: %s' % (e[2]))
-        else:
-            self.entries = {}
+
+            # unpack the json data
+            if 'type' not in jsondata or jsondata['type'] != self.type:
+                #raise DatabaseError('Database is not a proper assword database.')
+                self.entries = jsondata
+            # if jsondata['version'] != self.version:
+            #     raise DatabaseError('Database is not a proper assword database.')
+            # self.entries = jsondata['entries']
+            else:
+                self.entries = jsondata['entries']
 
     def _decryptDB(self, path):
         data = io.BytesIO()
@@ -77,32 +90,23 @@ If dbpath not specified, empty database will be initialized."""
         encdata.seek(0)
         return encdata
 
-    def _newindex(self):
-        # Return a potential new entry index.
-        indicies = [int(index) for index in self.entries.keys()]
-        if not indicies: indicies = [-1]
-        return str(max(indicies) + 1)
-
     def add(self, context, password=None):
         """Add a new entry to the database.
 Database won't be saved to disk until save()."""
-        newindex = self._newindex()
-
         if not password:
             bytes = int(os.getenv('ASSWORD_PASSWORD', DEFAULT_NEW_PASSWORD_OCTETS))
             print "bytes: %d"%(bytes)
             password = pwgen(bytes)
 
-        self.entries[newindex] = {}
-        self.entries[newindex]['context'] = context
-        self.entries[newindex]['password'] = password
-        self.entries[newindex]['date'] = int(time.time())
-        return newindex
+        e = {'password': password,
+             'date': int(time.time())}
+        self.entries[context] = e
+        return e
 
-    def remove(self, index):
+    def remove(self, context):
         """Remove an entry from the database.
 Database won't be saved to disk until save()."""
-        del self.entries[index]
+        del self.entries[context]
 
     def save(self, keyid=None, path=None):
         """Save database to disk.
@@ -118,7 +122,10 @@ If path not specified, database will be saved at original dbpath location."""
             path = self.dbpath
         if not path:
             raise DatabaseError('Save path not specified.')
-        cleardata = io.BytesIO(json.dumps(self.entries, sort_keys=True, indent=2))
+        jsondata = {'type': self.type,
+                    'version': self.version,
+                    'entries': self.entries}
+        cleardata = io.BytesIO(json.dumps(jsondata, indent=2))
         encdata = self._encryptDB(cleardata, keyid)
         newpath = path + '.new'
         bakpath = path + '.bak'
@@ -129,28 +136,18 @@ If path not specified, database will be saved at original dbpath location."""
         os.rename(newpath, path)
 
     def search(self, query=None):
-        """Search the 'context' fields of database entries for string.
-If query is None, all entries will be returned.  Special query
-'id:<id>' will return single entry."""
-        if query.find('id:') == 0:
-            index = query[3:]
-            if index in self.entries:
-                return {index: self.entries[index]}
+        """Search for query in contexts.
+If query is None, all entries will be returned."""
         mset = {}
-        for index, entry in self.entries.iteritems():
-            if query:
-                if entry['context'] and query in entry['context']:
-                    mset[index] = entry
-                    continue
-            else:
-                mset[index] = entry
+        for context, entry in self.entries.iteritems():
+            # simple substring match
+            if query in context:
+                mset[context] = entry
         return mset
 
-    def __getitem__(self, index):
-        '''Return database item based on id''' 
-        if type(index) is int:
-            index = "%d"%(index)
-        return self.entries[index]
+    def __getitem__(self, context):
+        '''Return database entry for exact context'''
+        return self.entries[context]
 
 ############################################################
 
