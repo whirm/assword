@@ -11,7 +11,7 @@ Build-Depends:
  python-gpgme,
  python-gtk2,
  debhelper (>= 9)
-Standards-Version: 3.9.3
+Standards-Version: 3.9.4
 
 Package: assword
 Architecture: all
