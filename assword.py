@@ -52,13 +52,10 @@ If dbpath not specified, empty database will be initialized."""
 
             # unpack the json data
             if 'type' not in jsondata or jsondata['type'] != self.type:
-                #raise DatabaseError('Database is not a proper assword database.')
-                self.entries = jsondata
-            # if jsondata['version'] != self.version:
-            #     raise DatabaseError('Database is not a proper assword database.')
-            # self.entries = jsondata['entries']
-            else:
-                self.entries = jsondata['entries']
+                raise DatabaseError('Database is not a proper assword database.')
+            if 'version' not in jsondata or jsondata['version'] != self.version:
+                raise DatabaseError('Incompatible database.')
+            self.entries = jsondata['entries']
 
     def _decryptDB(self, path):
         data = io.BytesIO()
