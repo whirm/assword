@@ -135,12 +135,6 @@ If path not specified, database will be saved at original dbpath location."""
             os.rename(path, bakpath)
         os.rename(newpath, path)
 
-    def get_exact_entry(self, context):
-        for x in self.entries:
-            if self.entries[x]['context'] == context:
-                return self.entries[x]
-        return None
-
     def search(self, query=None):
         """Search for query in contexts.
 If query is None, all entries will be returned."""
@@ -177,7 +171,6 @@ class Xsearch:
         self.window = None
         self.entry = None
         self.label = None
-        self.contexts = []
 
         if query:
             # If we have an intial query, directly do a search without
@@ -201,13 +194,12 @@ class Xsearch:
             self.entry.set_text(query)
         completion = gtk.EntryCompletion()
         self.entry.set_completion(completion)
-        liststore = gtk.ListStore(gobject.TYPE_STRING, gobject.TYPE_INT)
+        liststore = gtk.ListStore(gobject.TYPE_STRING)
         completion.set_model(liststore)
         completion.set_text_column(0)
         completion.set_match_func(match_func, 0) # 0 is column number
-        for val in self.db.entries:
-            self.contexts.append(self.db.entries[val]['context'])
-            liststore.append([self.db.entries[val]['context'], int(val)])
+        for context in self.db.entries:
+            liststore.append([context])
         hbox = gtk.HBox()
         vbox = gtk.VBox()
         self.createbutton = gtk.Button("Create")
@@ -239,12 +231,12 @@ class Xsearch:
 
     def updatecreate(self, widget, data=None):
         e = self.entry.get_text()
-        self.createbutton.set_sensitive(e != '' and e not in self.contexts)
+        self.createbutton.set_sensitive(e != '' and e not in self.db.entries)
 
     def enter(self, widget, data=None):
         e = self.entry.get_text()
-        if e in self.contexts:
-            self.selected = self.db.get_exact_entry(e)
+        if e in self.db.entries:
+            self.selected = self.db[e]
             if self.selected is None:
                 self.label.set_text("weird -- no context found even though we thought there should be one")
             else:
