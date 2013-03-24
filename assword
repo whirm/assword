@@ -213,7 +213,11 @@ def xsearch(args, method='xdo'):
         sys.exit(1)
     # do it
     keyid = get_keyid()
-    result = assword.Xsearch(DBPATH, query=query, keyid=keyid).returnValue()
+    db = assword.Database(DBPATH, keyid=keyid)
+    if db is None:
+        printf >>sys.stderr, "could not initialize the db %s with key %s"%(DBPATH, keyid)
+        return
+    result = assword.Xsearch(db, query=query).returnValue()
     # type the password in the saved window
     if result:
         if method == 'xdo':
