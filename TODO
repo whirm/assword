@@ -18,3 +18,7 @@
 
  * ENHANCEMENT: can we use python clipboard bindings instead of
    "xclip -i"?
+
+ * ENHANCEMENT: on xsearch if selected window is known browser, and
+   it's possible to extract url, preseed context search with hostname
+   of url.
