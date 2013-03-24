@@ -4,6 +4,7 @@ import gpgme
 import json
 import time
 import base64
+import datetime
 import Tkinter
 
 ############################################################
@@ -99,7 +100,7 @@ Database won't be saved to disk until save()."""
             password = pwgen(bytes)
 
         e = {'password': password,
-             'date': int(time.time())}
+             'date': datetime.datetime.now().isoformat()}
         self.entries[context] = e
         return e
 
