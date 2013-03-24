@@ -161,7 +161,15 @@ If query is None, all entries will be returned.  Special query
         return self.entries[index]
 
 ############################################################
-
+    
+# Assumes that the func_data is set to the number of the text column in the
+# model.
+def match_func(completion, key, iter, column):
+    model = completion.get_model()
+    text = model[iter][column]
+    if text.lower().find(key.lower()) > -1:
+        return True
+    return False
 
 class Xsearch:
     """Assword X-based query UI."""
@@ -201,6 +209,7 @@ class Xsearch:
         liststore = gtk.ListStore(gobject.TYPE_STRING, gobject.TYPE_INT)
         completion.set_model(liststore)
         completion.set_text_column(0)
+        completion.set_match_func(match_func, 0) # 0 is column number
         for val in self.db.entries:
             self.contexts.append(self.db.entries[val]['context'])
             liststore.append([self.db.entries[val]['context'], int(val)])
