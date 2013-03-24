@@ -9,7 +9,7 @@ Build-Depends:
  python-setuptools,
  help2man,
  python-gpgme,
- python-tk,
+ python-gtk2,
  debhelper (>= 9)
 Standards-Version: 3.9.3
 
@@ -20,7 +20,7 @@ Depends:
  ${misc:Depends},
  ${python:Depends},
  python-gpgme,
- python-tk
+ python-gtk2
 Recommends:
  python-xdo
 Description: Simple and secure password database and retrieval system.
