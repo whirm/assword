@@ -1,3 +1,11 @@
+assword (0.6-1) unstable; urgency=low
+
+  * New release.
+  * replace python-tk with python-gtk2 dependency
+  * Bump standards version (3.9.4)
+
+ -- Jameson Rollins <jrollins@finestructure.net>  Sun, 24 Mar 2013 00:00:56 -0700
+
 assword (0.5-1) unstable; urgency=low
 
   * New release, fixes versioning information.
