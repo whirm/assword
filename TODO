@@ -1,3 +1,11 @@
+ * BUG: xsearch context drop-down truncates long contexts.
+   This is problematic if you need to distinguish between multiple
+   long contexts.
+
+ * BUG: xsearch "create" button scales with window size.
+   It should stay a fixed size, to allow the context entry to
+   maximally fill the window width.
+
  * ENHANCEMENT: xdo has two input methods -- one based on XSendEvent,
    and one based on injecting keystrokes into the X session as a whole
    (the difference is whether a window ID parameter is passed to
