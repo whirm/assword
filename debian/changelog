@@ -1,3 +1,11 @@
+assword (0.7~pre1-1) UNRELEASED; urgency=low
+
+  * New Upstream Version
+  * fix "Create" from xsearch
+  * clean up/sync documentation now that numeric id's are not used.
+
+ -- Daniel Kahn Gillmor <dkg@fifthhorseman.net>  Thu, 28 Mar 2013 01:52:48 -0400
+
 assword (0.6-1) unstable; urgency=low
 
   * New release.
