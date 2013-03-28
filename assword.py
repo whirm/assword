@@ -246,8 +246,7 @@ class Xsearch:
 
     def create(self, widget, data=None):
         e = self.entry.get_text()
-        id = self.db.add(e)
-        self.selected = self.db[id]
+        self.selected = self.db.add(e)
         self.db.save()
         gtk.main_quit()
 
