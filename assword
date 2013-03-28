@@ -38,14 +38,11 @@ Commands:
                      user has the opportunity to generate and store a new
                      password, which is then delivered via ASSWORD_XPASTE.
 
-  remove [id:]<id>   Delete an entry from the database by index.
+  remove <context>   Delete an entry from the database.
 
   version            Report the version of this program.
 
   help               This help.
-
-The search string "id:<id>" can be used to retrieve a single entry by
-its index.
 
 Environment:
 
