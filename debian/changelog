@@ -1,10 +1,14 @@
 assword (0.7~pre1-1) UNRELEASED; urgency=low
 
+  [ Daniel Kahn Gillmor ]
   * New Upstream Version
   * fix "Create" from xsearch
   * clean up/sync documentation now that numeric id's are not used.
 
- -- Daniel Kahn Gillmor <dkg@fifthhorseman.net>  Thu, 28 Mar 2013 01:52:48 -0400
+  [ Jameson Rollins ]
+  * fix debian dependencies and recommends
+
+ -- Jameson Rollins <jrollins@finestructure.net>  Mon, 06 May 2013 08:25:06 -0700
 
 assword (0.6-1) unstable; urgency=low
 
