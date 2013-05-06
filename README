@@ -1,0 +1,50 @@
+Assword
+=======
+
+Simple and secure password management and retrieval system.
+
+Passwords and context strings are stored in a single OpenPGP encrypted
+and signed file.  The contexts can be searched.  Passwords are
+securely retrieved without displaying on the screen.  Multiple
+retrieval methods are available, including inserting retrieved
+password into the X clipboard, or typing them directly into an X
+window.
+
+Source
+------
+
+Clone the repo:
+
+    $ git clone git://finestructure.net/assword
+    $ cd assword
+
+Dependencies :
+  * python (>= 2.6)
+  * python-gpgme - Python wrapper for the GPGME library
+  * python-gtk2 - Python bindings for the GTK+ widget set
+  * python-pkg-resources - Package Discovery and Resource Access
+
+Recommends (for curses UI) :
+  * python-xdo - Support for simulating X11 input (libxdo bindings)
+  * xclip - Support for accessing X11 clipboard
+
+Debian
+------
+
+Debian/Ubuntu snapshot packages can be easily made from the git
+source.  You can build the package from any branch but it requires an
+up-to-date local branch of origin/debian, e.g.:
+
+    $ git branch debian origin/debian
+
+Then:
+
+    $ sudo apt-get install build-essential devscripts pkg-config python-all-dev python-setuptools debhelper dpkg-dev fakeroot
+    $ make debian-snapshot
+    $ sudo apt-get install python-gpgme python-gtk2 python-pkg-resources python-xdo xclip
+    $ sudo dpkg -i build/assword_0.*_amd64.deb
+
+Using Assword
+=============
+
+See the included assword(1) man page for detailed usage.
