@@ -1,7 +1,7 @@
 Source: assword
 Section: python
 Priority: optional
-Maintainer: Jameson Rollins <jrollins@finestructure.net>
+Maintainer: Jameson Graef Rollins <jrollins@finestructure.net>
 Uploaders: Daniel Kahn Gillmor <dkg@fifthhorseman.net>
 Build-Depends:
  pkg-config,
