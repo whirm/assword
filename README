@@ -51,8 +51,21 @@ Then:
     $ sudo apt-get install python-gpgme python-gtk2 python-pkg-resources python-xdo xclip
     $ sudo dpkg -i build/assword_0.*_amd64.deb
 
+
 Using Assword
 =============
 
 See the included assword(1) man page or built-in help string for
 detailed usage.
+
+
+Contact
+=======
+
+Assword was written by:
+
+    Jameson Graef Rollins <jrollins@finestructure.net>
+    Daniel Kahn Gillmor <dkg@fifthhorseman.net>
+
+Feel free to contact us directly with any questions, comments,
+feedback, patches, etc.
