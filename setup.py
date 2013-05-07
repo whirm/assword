@@ -4,11 +4,11 @@ from distutils.core import setup
 
 setup(
     name = 'assword',
-    version = '0.5',
-    description = 'Secure password database and retrieval system.',
+    version = '0.7',
+    description = 'Secure password management and retrieval system.',
     author = 'Jameson Rollins',
     author_email = 'jrollins@finestructure.net',
-    url = '',
+    url = 'http://finestructure.net/assword',
     py_modules = ['assword'],
     scripts = ['assword'],
     requires = [
@@ -16,7 +16,7 @@ setup(
         'getpass',
         'json',
         'base64',
-        'Tkinter',
+        'gtk2',
         'pkg_resources',
         ],
     )
