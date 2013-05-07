@@ -29,13 +29,15 @@ Commands:
                      entries are returned.  Passwords will not be displayed
                      unless ASSWORD_DUMP_PASSWORDS is set.
 
-  xsearch [<string>] X search interface, good for X window manager integration.
-                     If string is not specified a search prompt will be
-                     displayed.  All matching results for the query will be
-                     presented to the user.  When a result is selected, the
-                     password will be retrieved according to the method
-                     specified by ASSWORD_XPASTE.  If no match is found, the
-                     user has the opportunity to generate and store a new
+  gui [<string>]     GUI interface, good for X11 window manager integration.
+                     Upon invocation the user will be prompted to decrypt the
+                     database, after which a graphical search prompt will be
+                     presented.  If an additional string is provided, it will
+                     be added as the initial search string.  All matching results
+                     for the query will be presented to the user.  When a result
+                     is selected, the password will be retrieved according to the
+                     method specified by ASSWORD_XPASTE.  If no match is found,
+                     the user has the opportunity to generate and store a new
                      password, which is then delivered via ASSWORD_XPASTE.
 
   remove <context>   Delete an entry from the database.
@@ -193,7 +195,7 @@ See 'assword help' for more information."""
     print json.dumps(output, sort_keys=True, indent=2)
 
 # The X GUI
-def xsearch(args, method='xdo'):
+def gui(args, method='xdo'):
     query = ' '.join(args)
     if method == 'xdo':
         try:
@@ -214,7 +216,7 @@ def xsearch(args, method='xdo'):
     # do it
     keyid = get_keyid()
     db = open_db(keyid)
-    result = assword.Xsearch(db, query=query).returnValue()
+    result = assword.Gui(db, query=query).returnValue()
     # type the password in the saved window
     if result:
         if method == 'xdo':
@@ -260,9 +262,9 @@ if cmd == 'add':
     add(sys.argv[2:])
 elif cmd == 'dump':
     dump(sys.argv[2:])
-elif cmd == 'xsearch':
+elif cmd == 'gui':
     method = os.getenv('ASSWORD_XPASTE', 'xdo')
-    xsearch(sys.argv[2:], method=method)
+    gui(sys.argv[2:], method=method)
 elif cmd == 'remove':
     remove(sys.argv[2:])
 elif cmd == 'version' or cmd == '--version':

@@ -160,7 +160,7 @@ def match_func(completion, key, iter, column):
         return True
     return False
 
-class Xsearch:
+class Gui:
     """Assword X-based query UI."""
     def __init__(self, db, query=None):
 
