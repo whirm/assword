@@ -19,7 +19,7 @@ Depends:
  ${shlibs:Depends},
  ${misc:Depends},
  ${python:Depends},
- python-pkg-resources
+ python-pkg-resources,
  python-gpgme,
  python-gtk2
 Recommends:
