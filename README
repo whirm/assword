@@ -3,6 +3,10 @@ Assword
 
 Simple and secure password management and retrieval system.
 
+assword is a secure password manager that relies on your openpgp key
+for security and is designed to integrate in a minimal fashion into
+any X11 window manager
+
 Passwords and context strings are stored in a single OpenPGP encrypted
 and signed file.  The contexts can be searched.  Passwords are
 securely retrieved without displaying on the screen.  Multiple
