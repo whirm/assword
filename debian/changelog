@@ -7,8 +7,9 @@ assword (0.7-1) unstable; urgency=low
 
   [ Jameson Rollins ]
   * fix debian dependencies and recommends
+  * Closes ITP bug with wnpp (Closes: #706974)
 
- -- Jameson Rollins <jrollins@finestructure.net>  Mon, 06 May 2013 08:25:06 -0700
+ -- Jameson Rollins <jrollins@finestructure.net>  Tue, 07 May 2013 08:57:17 -0700
 
 assword (0.6-1) unstable; urgency=low
 
