@@ -25,10 +25,17 @@ Depends:
 Recommends:
  python-xdo,
  xclip
-Description: Simple and secure password database and retrieval system.
- Passwords and context strings are stored in a single OpenPGP
- encrypted and signed file.  The contexts can be searched.  Passwords
+Description: Simple and secure password management and retrieval system.
+ Assword is a secure password manager that relies on your OpenPGP key
+ for security and is designed to integrate in a minimal fashion into
+ any X11 window manager.
+ .
+ Passwords and context strings are stored in a single
+ OpenPGP-encrypted and signed file (meaning entry contexts are not
+ exposed to the filesystem).  Along with a simple command-line
+ interface, there is a streamlined GUI meant for X11 window manager
+ integration.  When invoked, the GUI produces a prompt to search
+ stored contexts.  New entries can also easily be created.  Passwords
  are securely retrieved without displaying on the screen.  Multiple
- retrieval methods are available, including inserting retrieved
- password into the X clipboard, or typing them directly into an X
- window.
+ retrieval methods are available, including auto-typing them directly
+ into an X11 window (default), or inserting them into the X11 clipboard.
