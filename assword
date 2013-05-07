@@ -29,7 +29,7 @@ Commands:
                      entries are returned.  Passwords will not be displayed
                      unless ASSWORD_DUMP_PASSWORDS is set.
 
-  gui [<string>]     GUI interface, good for X window manager integration.
+  gui [<string>]     GUI interface, good for X11 window manager integration.
                      Upon invocation the user will be prompted to decrypt the
                      database, after which a graphical search prompt will be
                      presented.  If an additional string is provided, it will
