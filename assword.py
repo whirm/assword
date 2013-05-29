@@ -224,6 +224,8 @@ class Gui:
 
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.window.set_border_width(10)
+        windowicon = self.window.render_icon(gtk.STOCK_DIALOG_AUTHENTICATION, gtk.ICON_SIZE_DIALOG)
+        self.window.set_icon(windowicon)
 
         self.entry = gtk.Entry()
         if query:
