@@ -243,9 +243,9 @@ class Gui:
         self.window.add(vbox)
 
         vbox.add(self.label)
-        vbox.add(hbox)
+        vbox.pack_end(hbox, False, False)
         hbox.add(self.entry)
-        hbox.add(self.createbutton)
+        hbox.pack_end(self.createbutton, False, False)
 
         self.entry.connect("activate", self.enter)
         self.entry.connect("changed", self.updatecreate)

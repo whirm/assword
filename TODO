@@ -2,10 +2,6 @@
    This is problematic if you need to distinguish between multiple
    long contexts.
 
- * BUG: xsearch "create" button scales with window size.
-   It should stay a fixed size, to allow the context entry to
-   maximally fill the window width.
-
  * BUG: assword add should not overwrite existing contexts
 
  * BUG: assword add '' should not create an entry with an empty
