@@ -1,7 +1,5 @@
-Assword
-=======
-
-Simple and secure password management and retrieval system.
+Assword - simple and secure password management and retrieval system
+====================================================================
 
 Assword is a secure password manager that relies on your OpenPGP key
 for security and is designed to integrate in a minimal fashion into
@@ -16,6 +14,27 @@ entries can also easily be created.  Passwords are securely retrieved
 without displaying on the screen.  Multiple retrieval methods are
 available, including auto-typing them directly into an X11 window
 (default), or inserting them into the X11 clipboard.
+
+
+Contact
+=======
+
+Assword was written by:
+
+    Jameson Graef Rollins <jrollins@finestructure.net>
+    Daniel Kahn Gillmor <dkg@fifthhorseman.net>
+
+Assword has a mailing list:
+
+    assword@lists.mayfirst.org
+    https://lists.mayfirst.org/mailman/listinfo/assword
+
+Feel free to mail the list with questions, comments, feedback,
+patches, etc.
+
+
+Getting Assword
+===============
 
 Source
 ------
@@ -38,7 +57,9 @@ Recommends (for curses UI) :
 Debian
 ------
 
-Debian/Ubuntu snapshot packages can be easily made from the git
+Assword is now available in Debian: http://packages.qa.debian.org/assword
+
+Debian/Ubuntu snapshot packages can also be easily made from the git
 source.  You can build the package from any branch but it requires an
 up-to-date local branch of origin/debian, e.g.:
 
@@ -57,15 +78,3 @@ Using Assword
 
 See the included assword(1) man page or built-in help string for
 detailed usage.
-
-
-Contact
-=======
-
-Assword was written by:
-
-    Jameson Graef Rollins <jrollins@finestructure.net>
-    Daniel Kahn Gillmor <dkg@fifthhorseman.net>
-
-Feel free to contact us directly with any questions, comments,
-feedback, patches, etc.
