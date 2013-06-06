@@ -1,5 +1,5 @@
-Assword - simple and secure password management and retrieval system
-====================================================================
+Assword - simple and secure password management system
+======================================================
 
 Assword is a secure password manager that relies on your OpenPGP key
 for security and is designed to integrate in a minimal fashion into
@@ -29,8 +29,10 @@ Assword has a mailing list:
     assword@lists.mayfirst.org
     https://lists.mayfirst.org/mailman/listinfo/assword
 
-Feel free to mail the list with questions, comments, feedback,
-patches, etc.
+We also hang out on IRC:
+
+    channel: #assword
+    server:  irc.oftc.net
 
 
 Getting Assword
