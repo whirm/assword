@@ -69,7 +69,7 @@ If dbpath not specified, empty database will be initialized."""
                 sigs = self.gpg.decrypt_verify(encdata, data)
         # check signature
         if not sigs[0].validity >= gpgme.VALIDITY_FULL:
-            raise DatabaseError(sigs, 'Signature on database was not fully valid.')
+            raise DatabaseError('Signature on database was not fully valid.')
         data.seek(0)
         return data
 
