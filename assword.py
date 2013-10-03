@@ -236,8 +236,12 @@ class Gui:
         completion.set_model(liststore)
         completion.set_text_column(0)
         completion.set_match_func(_match_func, 0) # 0 is column number
+        context_len = 20
         for context in self.db:
+            if len(context) > context_len:
+                context_len = len(context)
             liststore.append([context])
+        self.entry.set_width_chars(context_len)
         hbox = gtk.HBox()
         vbox = gtk.VBox()
         self.createbutton = gtk.Button("Create")
