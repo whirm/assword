@@ -6,6 +6,25 @@
    It should stay a fixed size, to allow the context entry to
    maximally fill the window width.
 
+ * BUG: assword add should not overwrite existing contexts
+
+ * BUG: assword add '' should not create an entry with an empty
+   context.  it should probably fail and complain, since the empty
+   string is a useless context.
+
+ * BUG: assword crashes when it gets EOF on stdin when prompting or
+   when ASSWORD_PASSWORD=prompt.
+
+ * BUG: assword should produce a more legible error message when
+   ASSWORD_PASSWORD is neither "prompt" nor an int.
+
+ * ENHANCEMENT: new subcommand "assword replace <context>"
+
+ * ENHANCEMENT: ASSWORD_PASSWORD=stdin should just read the password
+   from the first line of stdin (discarding trailing newlines).  not
+   sure how this should interact with the situation where no context
+   is supplied.
+
  * ENHANCEMENT: xdo has two input methods -- one based on XSendEvent,
    and one based on injecting keystrokes into the X session as a whole
    (the difference is whether a window ID parameter is passed to
@@ -53,3 +72,22 @@
  * ENHANCEMENT: consider how to deal with multiple DB backends, and
    post-save and pre-open hooks (e.g. to push to and fetch from a
    remote repository of these changes)
+
+ * ENHANCEMENT: associate default _XPASTE mechanisms with some
+   contexts: if you know that certain passwords work with tools that
+   prefer certain _XPASTE mechanisms, that ought to be something
+   assword can figure out.  see 526990F5.6050700@guerrier.com and
+   following discussion.
+
+ * ENHANCEMENT: import scripts from common password stores
+   (e.g. ~/.mozilla/firefox/*.default/signons.sqlite)
+
+ * ENHANCEMENT: guess about target window to determine default _XPASTE
+   mechanism (e.g. we know iceweasel works with one _XPASTE mechanism,
+   but rxvt works with another one) -- we can guess by looking at the
+   process that controls the window and/or the window title or other
+   things (we might need to expand python-xdo to get these guesses)
+
+ * ENHANCEMENT: use the target window title and/or pid to pre-seed the
+   search box in "assword gui" (this should be pre-selected text so it
+   is easy to start typing something else)
