@@ -64,6 +64,11 @@ class Database():
                 raise DatabaseError('Incompatible database.')
             self._entries = jsondata['entries']
 
+    @property
+    def version(self):
+        """Database version."""
+        return self._version
+
     def __str__(self):
         return '<assword.Database "%s">' % (self._dbpath)
 
