@@ -36,20 +36,20 @@ class Database():
         If dbpath not specified, empty database will be initialized.
 
         """
-        self.dbpath = dbpath
-        self.keyid = keyid
+        self._dbpath = dbpath
+        self._keyid = keyid
 
         # default database information
-        self.type = 'assword'
-        self.version = 1
-        self.entries = {}
+        self._type = 'assword'
+        self._version = 1
+        self._entries = {}
 
-        self.gpg = gpgme.Context()
-        self.gpg.armor = True
+        self._gpg = gpgme.Context()
+        self._gpg.armor = True
 
-        if self.dbpath and os.path.exists(self.dbpath):
+        if self._dbpath and os.path.exists(self._dbpath):
             try:
-                cleardata = self._decryptDB(self.dbpath)
+                cleardata = self._decryptDB(self._dbpath)
                 # FIXME: trap exception if json corrupt
                 jsondata = json.loads(cleardata.getvalue())
             except IOError as e:
@@ -58,11 +58,11 @@ class Database():
                 raise DatabaseError('Decryption error: %s' % (e[2]))
 
             # unpack the json data
-            if 'type' not in jsondata or jsondata['type'] != self.type:
+            if 'type' not in jsondata or jsondata['type'] != self._type:
                 raise DatabaseError('Database is not a proper assword database.')
-            if 'version' not in jsondata or jsondata['version'] != self.version:
+            if 'version' not in jsondata or jsondata['version'] != self._version:
                 raise DatabaseError('Incompatible database.')
-            self.entries = jsondata['entries']
+            self._entries = jsondata['entries']
 
     def __getitem__(self, context):
         """Return database entry for exact context."""
@@ -82,7 +82,7 @@ class Database():
             with open(path, 'rb') as f:
                 encdata.write(f.read())
                 encdata.seek(0)
-                sigs = self.gpg.decrypt_verify(encdata, data)
+                sigs = self._gpg.decrypt_verify(encdata, data)
         # check signature
         if not sigs[0].validity >= gpgme.VALIDITY_FULL:
             raise DatabaseError('Signature on database was not fully valid.')
@@ -93,17 +93,17 @@ class Database():
         # The signer and the recipient are assumed to be the same.
         # FIXME: should these be separated?
         try:
-            recipient = self.gpg.get_key(keyid or self.keyid)
-            signer = self.gpg.get_key(keyid or self.keyid)
+            recipient = self._gpg.get_key(keyid or self._keyid)
+            signer = self._gpg.get_key(keyid or self._keyid)
         except:
             raise DatabaseError('Could not retrieve GPG encryption key.')
-        self.gpg.signers = [signer]
+        self._gpg.signers = [signer]
         encdata = io.BytesIO()
         data.seek(0)
-        sigs = self.gpg.encrypt_sign([recipient],
-                                     gpgme.ENCRYPT_ALWAYS_TRUST,
-                                     data,
-                                     encdata)
+        sigs = self._gpg.encrypt_sign([recipient],
+                                      gpgme.ENCRYPT_ALWAYS_TRUST,
+                                      data,
+                                      encdata)
         encdata.seek(0)
         return encdata
 
@@ -119,7 +119,7 @@ class Database():
 
         e = {'password': password,
              'date': datetime.datetime.now().isoformat()}
-        self.entries[context] = e
+        self._entries[context] = e
         return e
 
     def remove(self, context):
@@ -128,7 +128,7 @@ class Database():
         Database won't be saved to disk until save().
 
         """
-        del self.entries[context]
+        del self._entries[context]
 
     def save(self, keyid=None, path=None):
         """Save database to disk.
@@ -140,16 +140,16 @@ class Database():
         # FIXME: should check that recipient is not different than who
         # the db was originally encrypted for
         if not keyid:
-            keyid = self.keyid
+            keyid = self._keyid
         if not keyid:
             raise DatabaseError('Key ID for decryption not specified.')
         if not path:
-            path = self.dbpath
+            path = self._dbpath
         if not path:
             raise DatabaseError('Save path not specified.')
-        jsondata = {'type': self.type,
-                    'version': self.version,
-                    'entries': self.entries}
+        jsondata = {'type': self._type,
+                    'version': self._version,
+                    'entries': self._entries}
         cleardata = io.BytesIO(json.dumps(jsondata, indent=2))
         encdata = self._encryptDB(cleardata, keyid)
         newpath = path + '.new'
@@ -167,7 +167,7 @@ class Database():
 
         """
         mset = {}
-        for context, entry in self.entries.iteritems():
+        for context, entry in self._entries.iteritems():
             # simple substring match
             if query in context:
                 mset[context] = entry
