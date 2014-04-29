@@ -15,6 +15,7 @@ import gobject
 DEFAULT_NEW_PASSWORD_OCTETS=18
 
 def pwgen(bytes):
+    """Return *bytes* bytes of random data, base64-encoded."""
     s = os.urandom(bytes)
     return base64.b64encode(s)
 
@@ -31,7 +32,10 @@ class Database():
 
     def __init__(self, dbpath=None, keyid=None):
         """Database at dbpath will be decrypted and loaded into memory.
-If dbpath not specified, empty database will be initialized."""
+
+        If dbpath not specified, empty database will be initialized.
+
+        """
         self.dbpath = dbpath
         self.keyid = keyid
 
@@ -93,7 +97,10 @@ If dbpath not specified, empty database will be initialized."""
 
     def add(self, context, password=None):
         """Add a new entry to the database.
-Database won't be saved to disk until save()."""
+
+        Database won't be saved to disk until save().
+
+        """
         if not password:
             bytes = int(os.getenv('ASSWORD_PASSWORD', DEFAULT_NEW_PASSWORD_OCTETS))
             password = pwgen(bytes)
@@ -105,13 +112,19 @@ Database won't be saved to disk until save()."""
 
     def remove(self, context):
         """Remove an entry from the database.
-Database won't be saved to disk until save()."""
+
+        Database won't be saved to disk until save().
+
+        """
         del self.entries[context]
 
     def save(self, keyid=None, path=None):
         """Save database to disk.
-Key ID must either be specified here or at database initialization.
-If path not specified, database will be saved at original dbpath location."""
+
+        Key ID must either be specified here or at database initialization.
+        If path not specified, database will be saved at original dbpath location.
+
+        """
         # FIXME: should check that recipient is not different than who
         # the db was originally encrypted for
         if not keyid:
@@ -137,7 +150,10 @@ If path not specified, database will be saved at original dbpath location."""
 
     def search(self, query=None):
         """Search for query in contexts.
-If query is None, all entries will be returned."""
+
+        If query is None, all entries will be returned.
+
+        """
         mset = {}
         for context, entry in self.entries.iteritems():
             # simple substring match
@@ -146,7 +162,7 @@ If query is None, all entries will be returned."""
         return mset
 
     def __getitem__(self, context):
-        '''Return database entry for exact context'''
+        """Return database entry for exact context."""
         return self.entries[context]
 
 ############################################################
