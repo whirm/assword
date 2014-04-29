@@ -169,7 +169,7 @@ class Database():
     
 # Assumes that the func_data is set to the number of the text column in the
 # model.
-def match_func(completion, key, iter, column):
+def _match_func(completion, key, iter, column):
     model = completion.get_model()
     text = model[iter][column]
     if text.lower().find(key.lower()) > -1:
@@ -213,7 +213,7 @@ class Gui:
         liststore = gtk.ListStore(gobject.TYPE_STRING)
         completion.set_model(liststore)
         completion.set_text_column(0)
-        completion.set_match_func(match_func, 0) # 0 is column number
+        completion.set_match_func(_match_func, 0) # 0 is column number
         for context in self.db.entries:
             liststore.append([context])
         hbox = gtk.HBox()
