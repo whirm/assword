@@ -64,6 +64,18 @@ class Database():
                 raise DatabaseError('Incompatible database.')
             self.entries = jsondata['entries']
 
+    def __getitem__(self, context):
+        """Return database entry for exact context."""
+        return self._entries[context]
+
+    def __contains__(self, context):
+        """True if context string in database."""
+        return context in self._entries
+
+    def __iter__(self):
+        """Iterator of all database contexts."""
+        return iter(self._entries)
+
     def _decryptDB(self, path):
         data = io.BytesIO()
         with io.BytesIO() as encdata:
@@ -161,9 +173,6 @@ class Database():
                 mset[context] = entry
         return mset
 
-    def __getitem__(self, context):
-        """Return database entry for exact context."""
-        return self.entries[context]
 
 ############################################################
     
