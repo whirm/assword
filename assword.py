@@ -64,6 +64,12 @@ class Database():
                 raise DatabaseError('Incompatible database.')
             self._entries = jsondata['entries']
 
+    def __str__(self):
+        return '<assword.Database "%s">' % (self._dbpath)
+
+    def __repr__(self):
+        return 'assword.Database("%s")' % (self._dbpath)
+
     def __getitem__(self, context):
         """Return database entry for exact context."""
         return self._entries[context]
