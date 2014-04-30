@@ -234,7 +234,7 @@ class Gui:
         completion.set_model(liststore)
         completion.set_text_column(0)
         completion.set_match_func(_match_func, 0) # 0 is column number
-        for context in self.db.entries:
+        for context in self.db:
             liststore.append([context])
         hbox = gtk.HBox()
         vbox = gtk.VBox()
@@ -267,11 +267,11 @@ class Gui:
 
     def updatecreate(self, widget, data=None):
         e = self.entry.get_text()
-        self.createbutton.set_sensitive(e != '' and e not in self.db.entries)
+        self.createbutton.set_sensitive(e != '' and e not in self.db)
 
     def enter(self, widget, data=None):
         e = self.entry.get_text()
-        if e in self.db.entries:
+        if e in self.db:
             self.selected = self.db[e]
             if self.selected is None:
                 self.label.set_text("weird -- no context found even though we thought there should be one")
