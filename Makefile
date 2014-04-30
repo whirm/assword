@@ -3,16 +3,17 @@
 
 VERSION:=$(shell git describe --tags | sed -e s/_/~/ -e s/-/+/ -e s/-/~/)
 
+.PHONY: all
 all: assword.1
 
 assword.1: assword
 	help2man ./assword -N -n 'Simple and secure password database and retrieval system' -o $@
 
-.PHONY: all debian-snapshot clean
-
+.PHONY: clean
 clean:
 	rm -f assword.1
 
+.PHONY: debian-snapshot
 debian-snapshot:
 	rm -rf build/deb
 	mkdir -p build/deb/debian
