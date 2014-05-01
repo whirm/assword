@@ -6,11 +6,14 @@ test_description='cli'
 
 ################################################################
 
-test_expect_code 10 'dump non-existant db' 'assword dump'
+test_expect_code 10 'dump non-existant db' \
+    'assword dump'
 
-test_expect_success 'add first entry' 'assword add foo@bar'
+test_expect_success 'add first entry' \
+    'assword add foo@bar'
 
-test_expect_success 'add second entry' "assword add 'baz asdf Dokw okb 32438uoijdf'"
+test_expect_success 'add second entry' \
+    "assword add 'baz asdf Dokw okb 32438uoijdf'"
 
 test_expect_code 1 'add existing context' \
     'assword add foo@bar'
