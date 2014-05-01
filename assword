@@ -96,6 +96,8 @@ def open_db(keyid=None):
     except assword.DatabaseError as e:
         print >>sys.stderr, 'Assword database error: %s' % e.msg
         sys.exit(10)
+    if db.sigvalid is False:
+        print >>sys.stderr, "WARNING: could not validate OpenPGP signature on db file."
     return db
 
 def get_keyid():
