@@ -35,6 +35,10 @@ class Database():
 
         If dbpath not specified, empty database will be initialized.
 
+        The sigvalid property is set False if any OpenPGP signatures
+        on the db file are invalid.  sigvalid is None for new
+        databases.
+
         """
         self._dbpath = dbpath
         self._keyid = keyid
