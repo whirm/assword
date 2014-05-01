@@ -55,6 +55,23 @@ foo@bar
 EOF
 test_expect_equal_file OUTPUT EXPECTED
 
+test_begin_subtest "replace entry"
+python - <<EOF | sed "s|$ASSWORD_DB|ASSWORD_DB|" >OUTPUT
+import assword
+db = assword.Database("$ASSWORD_DB", '$ASSWORD_KEYID')
+p1 = db['aaaa']['password']
+db.replace("aaaa")
+print 'aaaa' in db
+p2 = db['aaaa']['password']
+print p1 == p2
+db.save()
+EOF
+cat <<EOF >EXPECTED
+True
+False
+EOF
+test_expect_equal_file OUTPUT EXPECTED
+
 test_begin_subtest "remove entry"
 python - <<EOF | sed "s|$ASSWORD_DB|ASSWORD_DB|" >OUTPUT
 import assword

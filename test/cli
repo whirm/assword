@@ -12,6 +12,9 @@ test_expect_success 'add first entry' 'assword add foo@bar'
 
 test_expect_success 'add second entry' "assword add 'baz asdf Dokw okb 32438uoijdf'"
 
+test_expect_code 1 'add existing context' \
+    'assword add foo@bar'
+
 test_begin_subtest "dump all entries"
 assword dump | sed 's/"date": ".*"/FOO/g' >OUTPUT
 cat <<EOF >EXPECTED
@@ -63,6 +66,9 @@ EOF
 test_expect_equal_file OUTPUT EXPECTED
 
 test_expect_code 1 'add existing context' 'assword add foo@bar'
+test_expect_code 1 'replace non-existing context' \
+    'assword replace aaaa'
+
 
 test_expect_code 1 'remove non-existant entry' 'assword remove aaaa'
 
