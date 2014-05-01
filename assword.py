@@ -253,7 +253,7 @@ class Gui:
         hbox = gtk.HBox()
         vbox = gtk.VBox()
         self.createbutton = gtk.Button("Create")
-        self.label = gtk.Label("enter the context for the password you want:")
+        self.label = gtk.Label("enter context for desired password:")
         self.window.add(vbox)
 
         vbox.add(self.label)
