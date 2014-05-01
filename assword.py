@@ -46,6 +46,7 @@ class Database():
 
         self._gpg = gpgme.Context()
         self._gpg.armor = True
+        self._sigvalid = None
 
         if self._dbpath and os.path.exists(self._dbpath):
             try:
@@ -68,6 +69,11 @@ class Database():
     def version(self):
         """Database version."""
         return self._version
+
+    @property
+    def sigvalid(self):
+        """Validity of OpenPGP signature on db file."""
+        return self._sigvalid
 
     def __str__(self):
         return '<assword.Database "%s">' % (self._dbpath)
@@ -96,7 +102,9 @@ class Database():
                 sigs = self._gpg.decrypt_verify(encdata, data)
         # check signature
         if not sigs[0].validity >= gpgme.VALIDITY_FULL:
-            raise DatabaseError('Signature on database was not fully valid.')
+            self._sigvalid = False
+        else:
+            self._sigvalid = True
         data.seek(0)
         return data
 
