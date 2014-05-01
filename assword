@@ -19,6 +19,14 @@ def version():
 def usage():
     print "Usage:", PROG, "<command> [<args>...]"
     print """
+
+The password database is stored as a single json object, OpenPGP
+encrypted and signed, and written to local disk (see ASSWORD_DB).  The
+file will be created upon addition of the first entry.  Database
+entries are keyed by 'context'.  During retrieval of passwords, the
+database is decrypted and read into memory.  Contexts are search by
+sub-string match.
+
 Commands:
 
   add [<context>]    Add a new entry.  If context is '-' read from stdin.
