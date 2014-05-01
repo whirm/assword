@@ -249,18 +249,29 @@ class Gui:
             if len(context) > context_len:
                 context_len = len(context)
             liststore.append([context])
-        self.entry.set_width_chars(context_len)
         hbox = gtk.HBox()
         vbox = gtk.VBox()
         self.createbutton = gtk.Button("Create")
         self.label = gtk.Label("enter context for desired password:")
         self.window.add(vbox)
 
+        if self.db.sigvalid is False:
+            notification = gtk.Label()
+            msg = "WARNING: could not validate signature on db file"
+            notification.set_markup('<span foreground="red">%s</span>' % msg)
+            if len(msg) > context_len:
+                context_len = len(msg)
+            hsep = gtk.HSeparator()
+            vbox.add(notification)
+            vbox.add(hsep)
+            notification.show()
+            hsep.show()
+
         vbox.add(self.label)
         vbox.pack_end(hbox, False, False)
         hbox.add(self.entry)
         hbox.pack_end(self.createbutton, False, False)
-
+        self.entry.set_width_chars(context_len)
         self.entry.connect("activate", self.enter)
         self.entry.connect("changed", self.updatecreate)
         self.createbutton.connect("clicked", self.create)
