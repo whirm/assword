@@ -8,7 +8,7 @@ all: assword.1
 
 .PHONY: test
 test:
-	./test/assword-test $(ASSWORD_TEST_OPTS)
+	./test/assword-test $(TEST_OPTS)
 
 assword.1: assword
 	help2man ./assword -N -n 'Simple and secure password database and retrieval system' -o $@
