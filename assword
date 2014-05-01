@@ -137,21 +137,7 @@ def get_keyid():
 
     return keyid
 
-def password_prompt():
-    try:
-        password0 = getpass.getpass('password: ')
-        password1 = getpass.getpass('reenter password: ')
-        if password0 != password1:
-            print >>sys.stderr, "Error: Passwords do not match.  Aborting."
-            sys.exit(1)
-        return password0
-    except KeyboardInterrupt:
-        sys.exit(-1)
-
-# Add a password to the database.
-# First argument is potentially a context.
-def add(args):
-    keyid = get_keyid()
+def retrieve_context(args):
     try:
         # get context as argument
         context = args[0]
@@ -163,19 +149,51 @@ def add(args):
         context = raw_input('context: ')
     except KeyboardInterrupt:
         sys.exit(-1)
+    return context
 
-    db = open_db(keyid)
-
+def retrieve_password():
     # get password from prompt if requested
-    if os.getenv('ASSWORD_PASSWORD') == 'prompt':
-        password = password_prompt()
-    # otherwise auto generate
-    else:
+    if os.getenv('ASSWORD_PASSWORD') != 'prompt':
         print >>sys.stderr, "Auto-generating password..."
-        password = None
+        return None
+    try:
+        password0 = getpass.getpass('password: ')
+        password1 = getpass.getpass('reenter password: ')
+        if password0 != password1:
+            print >>sys.stderr, "Error: Passwords do not match.  Aborting."
+            sys.exit(1)
+        return password0
+    except KeyboardInterrupt:
+        sys.exit(-1)
 
+############################################################
+# command functions
+
+# Add a password to the database.
+# First argument is potentially a context.
+def add(args):
+    keyid = get_keyid()
+    context = retrieve_context(args)
+    db = open_db(keyid)
+    if context in db:
+        print >>sys.stderr, "Entry already exists with context: '%s'" % (context)
+        sys.exit(1)
+    password = retrieve_password()
     db.add(context.strip(), password)
-    # NOTE: This is what actually saves the new database!
+    db.save()
+    print >>sys.stderr, "New entry writen."
+
+# Replace a password in the database.
+# First argument is context to replace.
+def replace(args):
+    keyid = get_keyid()
+    context = retrieve_context(args)
+    db = open_db(keyid)
+    if context not in db:
+        print >>sys.stderr, "Context not found: '%s'" % (context)
+        sys.exit(1)
+    password = retrieve_password()
+    db.replace(context.strip(), password)
     db.save()
     print >>sys.stderr, "New entry writen."
 
@@ -251,7 +269,7 @@ def remove(args):
     print >>sys.stderr, "Entry removed."
 
 ############################################################
-# Basically main()
+# main
 
 if len(sys.argv) < 2:
     print >>sys.stderr, "Command not specified."
@@ -262,6 +280,8 @@ cmd = sys.argv[1]
 
 if cmd == 'add':
     add(sys.argv[2:])
+elif cmd == 'replace':
+    replace(sys.argv[2:])
 elif cmd == 'dump':
     dump(sys.argv[2:])
 elif cmd == 'gui':
