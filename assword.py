@@ -130,12 +130,7 @@ class Database():
         encdata.seek(0)
         return encdata
 
-    def add(self, context, password=None):
-        """Add a new entry to the database.
-
-        Database won't be saved to disk until save().
-
-        """
+    def _set_entry(self, context, password=None):
         if not password:
             bytes = int(os.getenv('ASSWORD_PASSWORD', DEFAULT_NEW_PASSWORD_OCTETS))
             password = pwgen(bytes)
@@ -145,10 +140,45 @@ class Database():
         self._entries[context] = e
         return e
 
+    def add(self, context, password=None):
+        """Add a new entry to the database.
+
+        If password is None, one will be generated automatically based
+        on the ASSWORD_PASSWORD environment variable.
+
+        If the context is already in the db a DatabaseError will be
+        raised.
+
+        Database changes are not saved to disk until the save() method
+        is called.
+
+        """
+        if context in self:
+            raise DatabaseError("Context already exists (see replace())")
+        return self._set_entry(context, password)
+
+    def replace(self, context, password=None):
+        """Replace entry in database.
+
+        If password is None, one will be generated automatically based
+        on the ASSWORD_PASSWORD environment variable.
+
+        If the context is not in the db a DatabaseError will be
+        raised.
+
+        Database changes are not saved to disk until the save() method
+        is called.
+
+        """
+        if context not in self:
+            raise DatabaseError("Context not found (see add())")
+        return self._set_entry(context, password)
+
     def remove(self, context):
         """Remove an entry from the database.
 
-        Database won't be saved to disk until save().
+        Database changes are not saved to disk until the save() method
+        is called.
 
         """
         del self._entries[context]
