@@ -263,7 +263,7 @@ def remove(args):
         sys.exit(1)
     db = open_db(keyid)
     if context not in db:
-        print >>sys.stderr, "No entry with context '%s'." % (context)
+        print >>sys.stderr, "No entry with context: '%s'" % (context)
         sys.exit(1)
     try:
         print >>sys.stderr, "Really remove entry '%s'?" % (context)
