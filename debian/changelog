@@ -1,3 +1,9 @@
+assword (0.8-1) unstable; urgency=low
+
+  * New upstream version (Closes: #745678, #720901, #727710, #728237, #725719)
+
+ -- Jameson Graef Rollins <jrollins@finestructure.net>  Thu, 01 May 2014 23:15:52 -0700
+
 assword (0.7-1) unstable; urgency=low
 
   [ Daniel Kahn Gillmor ]
