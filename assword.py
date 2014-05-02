@@ -15,6 +15,7 @@ import gobject
 DEFAULT_NEW_PASSWORD_OCTETS=18
 
 def pwgen(bytes):
+    """Return *bytes* bytes of random data, base64-encoded."""
     s = os.urandom(bytes)
     return base64.b64encode(s)
 
@@ -31,21 +32,29 @@ class Database():
 
     def __init__(self, dbpath=None, keyid=None):
         """Database at dbpath will be decrypted and loaded into memory.
-If dbpath not specified, empty database will be initialized."""
-        self.dbpath = dbpath
-        self.keyid = keyid
+
+        If dbpath not specified, empty database will be initialized.
+
+        The sigvalid property is set False if any OpenPGP signatures
+        on the db file are invalid.  sigvalid is None for new
+        databases.
+
+        """
+        self._dbpath = dbpath
+        self._keyid = keyid
 
         # default database information
-        self.type = 'assword'
-        self.version = 1
-        self.entries = {}
+        self._type = 'assword'
+        self._version = 1
+        self._entries = {}
 
-        self.gpg = gpgme.Context()
-        self.gpg.armor = True
+        self._gpg = gpgme.Context()
+        self._gpg.armor = True
+        self._sigvalid = None
 
-        if self.dbpath and os.path.exists(self.dbpath):
+        if self._dbpath and os.path.exists(self._dbpath):
             try:
-                cleardata = self._decryptDB(self.dbpath)
+                cleardata = self._decryptDB(self._dbpath)
                 # FIXME: trap exception if json corrupt
                 jsondata = json.loads(cleardata.getvalue())
             except IOError as e:
@@ -54,11 +63,39 @@ If dbpath not specified, empty database will be initialized."""
                 raise DatabaseError('Decryption error: %s' % (e[2]))
 
             # unpack the json data
-            if 'type' not in jsondata or jsondata['type'] != self.type:
+            if 'type' not in jsondata or jsondata['type'] != self._type:
                 raise DatabaseError('Database is not a proper assword database.')
-            if 'version' not in jsondata or jsondata['version'] != self.version:
+            if 'version' not in jsondata or jsondata['version'] != self._version:
                 raise DatabaseError('Incompatible database.')
-            self.entries = jsondata['entries']
+            self._entries = jsondata['entries']
+
+    @property
+    def version(self):
+        """Database version."""
+        return self._version
+
+    @property
+    def sigvalid(self):
+        """Validity of OpenPGP signature on db file."""
+        return self._sigvalid
+
+    def __str__(self):
+        return '<assword.Database "%s">' % (self._dbpath)
+
+    def __repr__(self):
+        return 'assword.Database("%s")' % (self._dbpath)
+
+    def __getitem__(self, context):
+        """Return database entry for exact context."""
+        return self._entries[context]
+
+    def __contains__(self, context):
+        """True if context string in database."""
+        return context in self._entries
+
+    def __iter__(self):
+        """Iterator of all database contexts."""
+        return iter(self._entries)
 
     def _decryptDB(self, path):
         data = io.BytesIO()
@@ -66,10 +103,12 @@ If dbpath not specified, empty database will be initialized."""
             with open(path, 'rb') as f:
                 encdata.write(f.read())
                 encdata.seek(0)
-                sigs = self.gpg.decrypt_verify(encdata, data)
+                sigs = self._gpg.decrypt_verify(encdata, data)
         # check signature
         if not sigs[0].validity >= gpgme.VALIDITY_FULL:
-            raise DatabaseError(sigs, 'Signature on database was not fully valid.')
+            self._sigvalid = False
+        else:
+            self._sigvalid = True
         data.seek(0)
         return data
 
@@ -77,54 +116,99 @@ If dbpath not specified, empty database will be initialized."""
         # The signer and the recipient are assumed to be the same.
         # FIXME: should these be separated?
         try:
-            recipient = self.gpg.get_key(keyid or self.keyid)
-            signer = self.gpg.get_key(keyid or self.keyid)
+            recipient = self._gpg.get_key(keyid or self._keyid)
+            signer = self._gpg.get_key(keyid or self._keyid)
         except:
             raise DatabaseError('Could not retrieve GPG encryption key.')
-        self.gpg.signers = [signer]
+        self._gpg.signers = [signer]
         encdata = io.BytesIO()
         data.seek(0)
-        sigs = self.gpg.encrypt_sign([recipient],
-                                     gpgme.ENCRYPT_ALWAYS_TRUST,
-                                     data,
-                                     encdata)
+        sigs = self._gpg.encrypt_sign([recipient],
+                                      gpgme.ENCRYPT_ALWAYS_TRUST,
+                                      data,
+                                      encdata)
         encdata.seek(0)
         return encdata
 
-    def add(self, context, password=None):
-        """Add a new entry to the database.
-Database won't be saved to disk until save()."""
-        if not password:
-            bytes = int(os.getenv('ASSWORD_PASSWORD', DEFAULT_NEW_PASSWORD_OCTETS))
+    def _set_entry(self, context, password=None):
+        if not isinstance(password, str):
+            if password is None:
+                bytes = DEFAULT_NEW_PASSWORD_OCTETS
+            if isinstance(password, int):
+                bytes = password
             password = pwgen(bytes)
-
         e = {'password': password,
              'date': datetime.datetime.now().isoformat()}
-        self.entries[context] = e
+        self._entries[context] = e
         return e
+
+    def add(self, context, password=None):
+        """Add a new entry to the database.
+
+        If password is None, one will be generated automatically.  If
+        password is an int it will be interpreted as the number of
+        random bytes to use.
+
+        If the context is already in the db a DatabaseError will be
+        raised.
+
+        Database changes are not saved to disk until the save() method
+        is called.
+
+        """
+        if context == '':
+            raise DatabaseError("Can not add empty string context")
+        if context in self:
+            raise DatabaseError("Context already exists (see replace())")
+        return self._set_entry(context, password)
+
+    def replace(self, context, password=None):
+        """Replace entry in database.
+
+        If password is None, one will be generated automatically.  If
+        password is an int it will be interpreted as the number of
+        random bytes to use.
+
+        If the context is not in the db a DatabaseError will be
+        raised.
+
+        Database changes are not saved to disk until the save() method
+        is called.
+
+        """
+        if context not in self:
+            raise DatabaseError("Context not found (see add())")
+        return self._set_entry(context, password)
 
     def remove(self, context):
         """Remove an entry from the database.
-Database won't be saved to disk until save()."""
-        del self.entries[context]
+
+        Database changes are not saved to disk until the save() method
+        is called.
+
+        """
+        del self._entries[context]
 
     def save(self, keyid=None, path=None):
         """Save database to disk.
-Key ID must either be specified here or at database initialization.
-If path not specified, database will be saved at original dbpath location."""
+
+        Key ID must either be specified here or at database initialization.
+        If path not specified, database will be saved at original dbpath location.
+
+        """
         # FIXME: should check that recipient is not different than who
         # the db was originally encrypted for
         if not keyid:
-            keyid = self.keyid
+            keyid = self._keyid
         if not keyid:
             raise DatabaseError('Key ID for decryption not specified.')
         if not path:
-            path = self.dbpath
+            path = self._dbpath
         if not path:
             raise DatabaseError('Save path not specified.')
-        jsondata = {'type': self.type,
-                    'version': self.version,
-                    'entries': self.entries}
+        jsondata = {'type': self._type,
+                    'version': self._version,
+                    'entries': self._entries}
         cleardata = io.BytesIO(json.dumps(jsondata, indent=2))
         encdata = self._encryptDB(cleardata, keyid)
         newpath = path + '.new'
@@ -137,23 +221,23 @@ If path not specified, database will be saved at original dbpath location."""
 
     def search(self, query=None):
         """Search for query in contexts.
-If query is None, all entries will be returned."""
+
+        If query is None, all entries will be returned.
+
+        """
         mset = {}
-        for context, entry in self.entries.iteritems():
+        for context, entry in self._entries.iteritems():
             # simple substring match
             if query in context:
                 mset[context] = entry
         return mset
 
-    def __getitem__(self, context):
-        '''Return database entry for exact context'''
-        return self.entries[context]
 
 ############################################################
     
 # Assumes that the func_data is set to the number of the text column in the
 # model.
-def match_func(completion, key, iter, column):
+def _match_func(completion, key, iter, column):
     model = completion.get_model()
     text = model[iter][column]
     if text.lower().find(key.lower()) > -1:
@@ -187,7 +271,9 @@ class Gui:
                 return
 
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        self.window.set_border_width(10)
+        self.window.set_border_width(4)
+        windowicon = self.window.render_icon(gtk.STOCK_DIALOG_AUTHENTICATION, gtk.ICON_SIZE_DIALOG)
+        self.window.set_icon(windowicon)
 
         self.entry = gtk.Entry()
         if query:
@@ -197,20 +283,35 @@ class Gui:
         liststore = gtk.ListStore(gobject.TYPE_STRING)
         completion.set_model(liststore)
         completion.set_text_column(0)
-        completion.set_match_func(match_func, 0) # 0 is column number
-        for context in self.db.entries:
+        completion.set_match_func(_match_func, 0) # 0 is column number
+        context_len = 20
+        for context in self.db:
+            if len(context) > context_len:
+                context_len = len(context)
             liststore.append([context])
         hbox = gtk.HBox()
         vbox = gtk.VBox()
         self.createbutton = gtk.Button("Create")
-        self.label = gtk.Label("enter the context for the password you want:")
+        self.label = gtk.Label("enter context for desired password:")
         self.window.add(vbox)
 
-        vbox.add(self.label)
-        vbox.add(hbox)
-        hbox.add(self.entry)
-        hbox.add(self.createbutton)
+        if self.db.sigvalid is False:
+            notification = gtk.Label()
+            msg = "WARNING: could not validate signature on db file"
+            notification.set_markup('<span foreground="red">%s</span>' % msg)
+            if len(msg) > context_len:
+                context_len = len(msg)
+            hsep = gtk.HSeparator()
+            vbox.add(notification)
+            vbox.add(hsep)
+            notification.show()
+            hsep.show()
 
+        vbox.add(self.label)
+        vbox.pack_end(hbox, False, False)
+        hbox.add(self.entry)
+        hbox.pack_end(self.createbutton, False, False)
+        self.entry.set_width_chars(context_len)
         self.entry.connect("activate", self.enter)
         self.entry.connect("changed", self.updatecreate)
         self.createbutton.connect("clicked", self.create)
@@ -231,11 +332,11 @@ class Gui:
 
     def updatecreate(self, widget, data=None):
         e = self.entry.get_text()
-        self.createbutton.set_sensitive(e != '' and e not in self.db.entries)
+        self.createbutton.set_sensitive(e != '' and e not in self.db)
 
     def enter(self, widget, data=None):
         e = self.entry.get_text()
-        if e in self.db.entries:
+        if e in self.db:
             self.selected = self.db[e]
             if self.selected is None:
                 self.label.set_text("weird -- no context found even though we thought there should be one")

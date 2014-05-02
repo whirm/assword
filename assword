@@ -19,6 +19,14 @@ def version():
 def usage():
     print "Usage:", PROG, "<command> [<args>...]"
     print """
+
+The password database is stored as a single json object, OpenPGP
+encrypted and signed, and written to local disk (see ASSWORD_DB).  The
+file will be created upon addition of the first entry.  Database
+entries are keyed by 'context'.  During retrieval of passwords, the
+database is decrypted and read into memory.  Contexts are search by
+sub-string match.
+
 Commands:
 
   add [<context>]    Add a new entry.  If context is '-' read from stdin.
@@ -96,6 +104,8 @@ def open_db(keyid=None):
     except assword.DatabaseError as e:
         print >>sys.stderr, 'Assword database error: %s' % e.msg
         sys.exit(10)
+    if db.sigvalid is False:
+        print >>sys.stderr, "WARNING: could not validate OpenPGP signature on db file."
     return db
 
 def get_keyid():
@@ -135,21 +145,7 @@ def get_keyid():
 
     return keyid
 
-def password_prompt():
-    try:
-        password0 = getpass.getpass('password: ')
-        password1 = getpass.getpass('reenter password: ')
-        if password0 != password1:
-            print >>sys.stderr, "Error: Passwords do not match.  Aborting."
-            sys.exit(1)
-        return password0
-    except KeyboardInterrupt:
-        sys.exit(-1)
-
-# Add a password to the database.
-# First argument is potentially a context.
-def add(args):
-    keyid = get_keyid()
+def retrieve_context(args):
     try:
         # get context as argument
         context = args[0]
@@ -161,20 +157,67 @@ def add(args):
         context = raw_input('context: ')
     except KeyboardInterrupt:
         sys.exit(-1)
+    if context == '':
+        sys.exit("Can not add empty string context.")
+    return context
 
-    db = open_db(keyid)
-
+def retrieve_password():
     # get password from prompt if requested
-    if os.getenv('ASSWORD_PASSWORD') == 'prompt':
-        password = password_prompt()
-    # otherwise auto generate
-    else:
+    if os.getenv('ASSWORD_PASSWORD') is None:
+        return None
+    elif os.getenv('ASSWORD_PASSWORD') != 'prompt':
+        try:
+            octets = int(os.getenv('ASSWORD_PASSWORD'))
+        except ValueError:
+            sys.exit("ASSWORD_PASSWORD environment variable is neither int or 'prompt'.")
         print >>sys.stderr, "Auto-generating password..."
-        password = None
+        return octets
+    try:
+        password0 = getpass.getpass('password: ')
+        password1 = getpass.getpass('reenter password: ')
+        if password0 != password1:
+            sys.exit("Passwords do not match.  Aborting.")
+        return password0
+    except KeyboardInterrupt:
+        sys.exit(-1)
 
-    db.add(context.strip(), password)
-    # NOTE: This is what actually saves the new database!
-    db.save()
+############################################################
+# command functions
+
+# Add a password to the database.
+# First argument is potentially a context.
+def add(args):
+    keyid = get_keyid()
+    context = retrieve_context(args)
+    db = open_db(keyid)
+    if context in db:
+        print >>sys.stderr, "Entry already exists with context: '%s'" % (context)
+        sys.exit(1)
+    password = retrieve_password()
+    try:
+        db.add(context.strip(), password)
+        db.save()
+    except assword.DatabaseError as e:
+        print >>sys.stderr, 'Assword database error: %s' % e.msg
+        sys.exit(10)
+    print >>sys.stderr, "New entry writen."
+
+# Replace a password in the database.
+# First argument is context to replace.
+def replace(args):
+    keyid = get_keyid()
+    context = retrieve_context(args)
+    db = open_db(keyid)
+    if context not in db:
+        print >>sys.stderr, "Context not found: '%s'" % (context)
+        sys.exit(1)
+    password = retrieve_password()
+    try:
+        db.replace(context.strip(), password)
+        db.save()
+    except assword.DatabaseError as e:
+        print >>sys.stderr, 'Assword database error: %s' % e.msg
+        sys.exit(10)
     print >>sys.stderr, "New entry writen."
 
 def dump(args):
@@ -234,8 +277,8 @@ def remove(args):
         print >>sys.stderr, "Must specify index to remove."
         sys.exit(1)
     db = open_db(keyid)
-    if context not in db.entries:
-        print >>sys.stderr, "No entry with context '%s'." % (context)
+    if context not in db:
+        print >>sys.stderr, "No entry with context: '%s'" % (context)
         sys.exit(1)
     try:
         print >>sys.stderr, "Really remove entry '%s'?" % (context)
@@ -244,12 +287,16 @@ def remove(args):
         sys.exit(-1)
     if response != 'yes':
         sys.exit(-1)
-    db.remove(context)
-    db.save()
+    try:
+        db.remove(context)
+        db.save()
+    except assword.DatabaseError as e:
+        print >>sys.stderr, 'Assword database error: %s' % e.msg
+        sys.exit(10)
     print >>sys.stderr, "Entry removed."
 
 ############################################################
-# Basically main()
+# main
 
 if len(sys.argv) < 2:
     print >>sys.stderr, "Command not specified."
@@ -260,6 +307,8 @@ cmd = sys.argv[1]
 
 if cmd == 'add':
     add(sys.argv[2:])
+elif cmd == 'replace':
+    replace(sys.argv[2:])
 elif cmd == 'dump':
     dump(sys.argv[2:])
 elif cmd == 'gui':

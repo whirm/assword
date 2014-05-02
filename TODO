@@ -1,10 +1,10 @@
- * BUG: xsearch context drop-down truncates long contexts.
-   This is problematic if you need to distinguish between multiple
-   long contexts.
+ * BUG: assword crashes when it gets EOF on stdin when prompting or
+   when ASSWORD_PASSWORD=prompt.
 
- * BUG: xsearch "create" button scales with window size.
-   It should stay a fixed size, to allow the context entry to
-   maximally fill the window width.
+ * ENHANCEMENT: ASSWORD_PASSWORD=stdin should just read the password
+   from the first line of stdin (discarding trailing newlines).  not
+   sure how this should interact with the situation where no context
+   is supplied.
 
  * ENHANCEMENT: xdo has two input methods -- one based on XSendEvent,
    and one based on injecting keystrokes into the X session as a whole
@@ -13,10 +13,6 @@
    possibility of leakage because some X11 applications ignore
    XSendEvent input.  Provide some hinting mechanism derived from the
    window in question to conditionally enable XSendEvent instead.
-
- * ENHANCEMENT: add iterator to db class?
-
- * ENHANCEMENT: test suite!
 
  * ENHANCEMENT: be able to edit a context once it is created.  for
    example, i often create a password when setting up an account on a
@@ -53,3 +49,24 @@
  * ENHANCEMENT: consider how to deal with multiple DB backends, and
    post-save and pre-open hooks (e.g. to push to and fetch from a
    remote repository of these changes)
+
+ * ENHANCEMENT: associate default _XPASTE mechanisms with some
+   contexts: if you know that certain passwords work with tools that
+   prefer certain _XPASTE mechanisms, that ought to be something
+   assword can figure out.  see 526990F5.6050700@guerrier.com and
+   following discussion.
+
+ * ENHANCEMENT: import scripts from common password stores
+   (e.g. ~/.mozilla/firefox/*.default/signons.sqlite)
+
+ * ENHANCEMENT: guess about target window to determine default _XPASTE
+   mechanism (e.g. we know iceweasel works with one _XPASTE mechanism,
+   but rxvt works with another one) -- we can guess by looking at the
+   process that controls the window and/or the window title or other
+   things (we might need to expand python-xdo to get these guesses)
+
+ * ENHANCEMENT: use the target window title and/or pid to pre-seed the
+   search box in "assword gui" (this should be pre-selected text so it
+   is easy to start typing something else)
+
+ * ENHANCEMENT: test for various PASSWORD values

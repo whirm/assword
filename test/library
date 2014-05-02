@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+
+test_description='library interface'
+
+. lib/test-lib.sh
+
+################################################################
+
+test_begin_subtest "create db"
+python - <<EOF | sed "s|$ASSWORD_DB|ASSWORD_DB|" >OUTPUT
+import assword
+db = assword.Database("$ASSWORD_DB")
+print db
+print db.version
+db.add("foo@bar")
+print 'foo@bar' in db
+db.save('$ASSWORD_KEYID')
+EOF
+cat <<EOF >EXPECTED
+<assword.Database "ASSWORD_DB">
+1
+True
+EOF
+test_expect_equal_file OUTPUT EXPECTED
+
+test_begin_subtest "decrypt db"
+python - <<EOF | sed "s|$ASSWORD_DB|ASSWORD_DB|" >OUTPUT
+import assword
+db = assword.Database("$ASSWORD_DB")
+print db
+print db.version
+print 'foo@bar' in db
+EOF
+cat <<EOF >EXPECTED
+<assword.Database "ASSWORD_DB">
+1
+True
+EOF
+test_expect_equal_file OUTPUT EXPECTED
+
+test_begin_subtest "add second entry"
+python - <<EOF | sed "s|$ASSWORD_DB|ASSWORD_DB|" >OUTPUT
+import assword
+db = assword.Database("$ASSWORD_DB", '$ASSWORD_KEYID')
+db.add("aaaa")
+print 'aaaa' in db
+for e in sorted(db):
+  print e
+db.save()
+EOF
+cat <<EOF >EXPECTED
+True
+aaaa
+foo@bar
+EOF
+test_expect_equal_file OUTPUT EXPECTED
+
+test_begin_subtest "replace entry"
+python - <<EOF | sed "s|$ASSWORD_DB|ASSWORD_DB|" >OUTPUT
+import assword
+db = assword.Database("$ASSWORD_DB", '$ASSWORD_KEYID')
+p1 = db['aaaa']['password']
+db.replace("aaaa")
+print 'aaaa' in db
+p2 = db['aaaa']['password']
+print p1 == p2
+db.save()
+EOF
+cat <<EOF >EXPECTED
+True
+False
+EOF
+test_expect_equal_file OUTPUT EXPECTED
+
+test_begin_subtest "remove entry"
+python - <<EOF | sed "s|$ASSWORD_DB|ASSWORD_DB|" >OUTPUT
+import assword
+db = assword.Database("$ASSWORD_DB", '$ASSWORD_KEYID')
+print 'foo@bar' in db
+db.remove("foo@bar")
+print 'foo@bar' in db
+db.save()
+EOF
+python - <<EOF | sed "s|$ASSWORD_DB|ASSWORD_DB|" >>OUTPUT
+import assword
+db = assword.Database("$ASSWORD_DB", '$ASSWORD_KEYID')
+for e in db:
+  print e
+EOF
+cat <<EOF >EXPECTED
+True
+False
+aaaa
+EOF
+test_expect_equal_file OUTPUT EXPECTED
+
+################################################################
+
+test_done

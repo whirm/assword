@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+
+test_description='cli'
+
+. lib/test-lib.sh
+
+################################################################
+
+test_expect_code 10 'dump non-existant db' \
+    'assword dump'
+
+test_expect_success 'add first entry' \
+    'assword add foo@bar'
+
+test_expect_success 'add second entry' \
+    "assword add 'baz asdf Dokw okb 32438uoijdf'"
+
+test_expect_code 1 'add existing context' \
+    'assword add foo@bar'
+
+test_begin_subtest "dump all entries"
+assword dump | sed 's/"date": ".*"/FOO/g' >OUTPUT
+cat <<EOF >EXPECTED
+{
+  "baz asdf Dokw okb 32438uoijdf": {
+    FOO
+  }, 
+  "foo@bar": {
+    FOO
+  }
+}
+EOF
+test_expect_equal_file OUTPUT EXPECTED
+
+test_begin_subtest "dump search 0"
+assword dump foo | sed 's/"date": ".*"/FOO/g' >OUTPUT
+cat <<EOF >EXPECTED
+{
+  "foo@bar": {
+    FOO
+  }
+}
+EOF
+test_expect_equal_file OUTPUT EXPECTED
+
+test_begin_subtest "dump search 1"
+assword dump asdf | sed 's/"date": ".*"/FOO/g' >OUTPUT
+cat <<EOF >EXPECTED
+{
+  "baz asdf Dokw okb 32438uoijdf": {
+    FOO
+  }
+}
+EOF
+test_expect_equal_file OUTPUT EXPECTED
+
+test_begin_subtest "dump search 2"
+assword dump ba | sed 's/"date": ".*"/FOO/g' >OUTPUT
+cat <<EOF >EXPECTED
+{
+  "baz asdf Dokw okb 32438uoijdf": {
+    FOO
+  }, 
+  "foo@bar": {
+    FOO
+  }
+}
+EOF
+test_expect_equal_file OUTPUT EXPECTED
+
+test_expect_code 1 'add existing context' 'assword add foo@bar'
+test_expect_code 1 'replace non-existing context' \
+    'assword replace aaaa'
+
+
+test_expect_code 1 'remove non-existant entry' 'assword remove aaaa'
+
+test_begin_subtest "remove entry"
+echo yes | assword remove foo@bar
+assword dump | sed 's/"date": ".*"/FOO/g' >OUTPUT
+cat <<EOF >EXPECTED
+{
+  "baz asdf Dokw okb 32438uoijdf": {
+    FOO
+  }
+}
+EOF
+test_expect_equal_file OUTPUT EXPECTED
+
+################################################################
+
+test_done

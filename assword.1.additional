@@ -1,0 +1,5 @@
+[Signature validation]
+
+During decryption, OpenPGP signatures on the db file are checked for
+validity.  If any of them are found to not be valid, a warning message
+will be written to stderr.
