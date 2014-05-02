@@ -1,20 +1,5 @@
- * BUG: xsearch context drop-down truncates long contexts.
-   This is problematic if you need to distinguish between multiple
-   long contexts.
-
- * BUG: assword add should not overwrite existing contexts
-
- * BUG: assword add '' should not create an entry with an empty
-   context.  it should probably fail and complain, since the empty
-   string is a useless context.
-
  * BUG: assword crashes when it gets EOF on stdin when prompting or
    when ASSWORD_PASSWORD=prompt.
-
- * BUG: assword should produce a more legible error message when
-   ASSWORD_PASSWORD is neither "prompt" nor an int.
-
- * ENHANCEMENT: new subcommand "assword replace <context>"
 
  * ENHANCEMENT: ASSWORD_PASSWORD=stdin should just read the password
    from the first line of stdin (discarding trailing newlines).  not
@@ -28,10 +13,6 @@
    possibility of leakage because some X11 applications ignore
    XSendEvent input.  Provide some hinting mechanism derived from the
    window in question to conditionally enable XSendEvent instead.
-
- * ENHANCEMENT: add iterator to db class?
-
- * ENHANCEMENT: test suite!
 
  * ENHANCEMENT: be able to edit a context once it is created.  for
    example, i often create a password when setting up an account on a
@@ -87,3 +68,5 @@
  * ENHANCEMENT: use the target window title and/or pid to pre-seed the
    search box in "assword gui" (this should be pre-selected text so it
    is easy to start typing something else)
+
+ * ENHANCEMENT: test for various PASSWORD values
