@@ -11,7 +11,9 @@ test:
 	./test/assword-test $(TEST_OPTS)
 
 assword.1: assword
-	help2man ./assword -N -n 'Simple and secure password database and retrieval system' -o $@
+	help2man ./assword -N -n 'Simple and secure password database and retrieval system' \
+	--include=assword.1.additional \
+	-o $@
 
 .PHONY: clean
 clean:
