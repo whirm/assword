@@ -157,6 +157,8 @@ def retrieve_context(args):
         context = raw_input('context: ')
     except KeyboardInterrupt:
         sys.exit(-1)
+    if context == '':
+        sys.exit("Can not add empty string context.")
     return context
 
 def retrieve_password():
