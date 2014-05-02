@@ -131,10 +131,12 @@ class Database():
         return encdata
 
     def _set_entry(self, context, password=None):
-        if not password:
-            bytes = int(os.getenv('ASSWORD_PASSWORD', DEFAULT_NEW_PASSWORD_OCTETS))
+        if not isinstance(password, str):
+            if password is None:
+                bytes = DEFAULT_NEW_PASSWORD_OCTETS
+            if isinstance(password, int):
+                bytes = password
             password = pwgen(bytes)
-
         e = {'password': password,
              'date': datetime.datetime.now().isoformat()}
         self._entries[context] = e
@@ -143,8 +145,9 @@ class Database():
     def add(self, context, password=None):
         """Add a new entry to the database.
 
-        If password is None, one will be generated automatically based
-        on the ASSWORD_PASSWORD environment variable.
+        If password is None, one will be generated automatically.  If
+        password is an int it will be interpreted as the number of
+        random bytes to use.
 
         If the context is already in the db a DatabaseError will be
         raised.
@@ -162,8 +165,9 @@ class Database():
     def replace(self, context, password=None):
         """Replace entry in database.
 
-        If password is None, one will be generated automatically based
-        on the ASSWORD_PASSWORD environment variable.
+        If password is None, one will be generated automatically.  If
+        password is an int it will be interpreted as the number of
+        random bytes to use.
 
         If the context is not in the db a DatabaseError will be
         raised.
