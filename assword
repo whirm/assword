@@ -163,15 +163,20 @@ def retrieve_context(args):
 
 def retrieve_password():
     # get password from prompt if requested
-    if os.getenv('ASSWORD_PASSWORD') != 'prompt':
-        print >>sys.stderr, "Auto-generating password..."
+    if os.getenv('ASSWORD_PASSWORD') is None:
         return None
+    elif os.getenv('ASSWORD_PASSWORD') != 'prompt':
+        try:
+            octets = int(os.getenv('ASSWORD_PASSWORD'))
+        except ValueError:
+            sys.exit("ASSWORD_PASSWORD environment variable is neither int or 'prompt'.")
+        print >>sys.stderr, "Auto-generating password..."
+        return octets
     try:
         password0 = getpass.getpass('password: ')
         password1 = getpass.getpass('reenter password: ')
         if password0 != password1:
-            print >>sys.stderr, "Error: Passwords do not match.  Aborting."
-            sys.exit(1)
+            sys.exit("Passwords do not match.  Aborting.")
         return password0
     except KeyboardInterrupt:
         sys.exit(-1)
