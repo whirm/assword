@@ -153,6 +153,8 @@ class Database():
         is called.
 
         """
+        if context == '':
+            raise DatabaseError("Can not add empty string context")
         if context in self:
             raise DatabaseError("Context already exists (see replace())")
         return self._set_entry(context, password)
