@@ -163,9 +163,10 @@ def retrieve_context(args):
             context = sys.stdin.read()
     # prompt for context if not specified
     except IndexError:
-        context = raw_input('context: ')
-    except KeyboardInterrupt:
-        sys.exit(-1)
+        try:
+            context = raw_input('context: ')
+        except KeyboardInterrupt:
+            sys.exit(-1)
     if context == '':
         sys.exit("Can not add empty string context.")
     return context
