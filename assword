@@ -30,8 +30,17 @@ sub-string match.
 Commands:
 
   add [<context>]    Add a new entry.  If context is '-' read from stdin.
-                     If not specified, user will be prompted for context.
-                     See ASSWORD_PASSWORD for information on passwords.
+                     If not specified, user will be prompted for
+                     context.  If the context already exists, an error
+                     will be thrown.  See ASSWORD_PASSWORD for
+                     information on passwords.
+
+  replace [<context>]
+                     Replace password for existing entry.  If context
+                     is '-' read from stdin.  If not specified, user
+                     will be prompted for context.  If the context
+                     does not exist an error will be thrown. See
+                     ASSWORD_PASSWORD for information on passwords.
 
   dump [<string>]    Dump search results as json.  If string not specified all
                      entries are returned.  Passwords will not be displayed
@@ -154,9 +163,10 @@ def retrieve_context(args):
             context = sys.stdin.read()
     # prompt for context if not specified
     except IndexError:
-        context = raw_input('context: ')
-    except KeyboardInterrupt:
-        sys.exit(-1)
+        try:
+            context = raw_input('context: ')
+        except KeyboardInterrupt:
+            sys.exit(-1)
     if context == '':
         sys.exit("Can not add empty string context.")
     return context
