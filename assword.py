@@ -120,11 +120,16 @@ class Database():
             signer = self._gpg.get_key(keyid or self._keyid)
         except:
             raise DatabaseError('Could not retrieve GPG encryption key.')
+        flags = gpgme.ENCRYPT_ALWAYS_TRUST
+        try:
+            flags |= gpgme.ENCRYPT_NO_COMPRESS
+        except AttributeError:
+            pass
         self._gpg.signers = [signer]
         encdata = io.BytesIO()
         data.seek(0)
         sigs = self._gpg.encrypt_sign([recipient],
-                                      gpgme.ENCRYPT_ALWAYS_TRUST,
+                                      flags,
                                       data,
                                       encdata)
         encdata.seek(0)
