@@ -142,8 +142,9 @@ def get_keyid():
     try:
         gpg = gpgme.Context()
         gpg.get_key(keyid)
-    except gpgme.GpgmeError:
-        print >>sys.stderr, "Invalid key ID:", keyid
+    except gpgme.GpgmeError as e:
+        print >>sys.stderr, "GPGME error for key ID %s:" % keyid
+        print >>sys.stderr, "  %s" % e
         sys.exit(20)
 
     if save:
