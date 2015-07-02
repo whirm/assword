@@ -1,6 +1,7 @@
 assword (0.8-2) unstable; urgency=medium
 
   * d/control: fixed Homepage URL to use https
+  * d/copyright: refer to all files explicitly
 
  -- Daniel Kahn Gillmor <dkg@fifthhorseman.net>  Thu, 02 Jul 2015 12:11:49 -0400
 
