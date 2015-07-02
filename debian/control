@@ -12,7 +12,7 @@ Build-Depends:
  python-gtk2,
  debhelper (>= 9)
 Standards-Version: 3.9.5
-Homepage: http://finestructure.net/assword
+Homepage: https://finestructure.net/assword
 Vcs-Git: git://finestructure.net/assword
 
 Package: assword

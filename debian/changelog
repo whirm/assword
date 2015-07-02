@@ -1,3 +1,9 @@
+assword (0.8-2) unstable; urgency=medium
+
+  * d/control: fixed Homepage URL to use https
+
+ -- Daniel Kahn Gillmor <dkg@fifthhorseman.net>  Thu, 02 Jul 2015 12:11:49 -0400
+
 assword (0.8-1) unstable; urgency=low
 
   * New upstream version (Closes: #745678, #720901, #727710, #728237, #725719)
