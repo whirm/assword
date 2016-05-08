@@ -14,9 +14,9 @@ import gobject
 
 DEFAULT_NEW_PASSWORD_OCTETS=18
 
-def pwgen(bytes):
-    """Return *bytes* bytes of random data, base64-encoded."""
-    s = os.urandom(bytes)
+def pwgen(nbytes):
+    """Return *nbytes* bytes of random data, base64-encoded."""
+    s = os.urandom(nbytes)
     return base64.b64encode(s)
 
 ############################################################
