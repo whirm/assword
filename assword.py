@@ -334,6 +334,23 @@ class Gui:
         self.update_button(self.entry)
         self.window.show()
 
+    ##########
+
+    @staticmethod
+    def reset_signal(obj, signal, func=None):
+        if hasattr(obj, '_callbacks'):
+            if signal in obj._callbacks:
+                cur = obj._callbacks[signal]
+                obj.disconnect(cur)
+                obj._callbacks.pop(signal)
+        else:
+            obj._callbacks = {}
+        if func:
+            hid = obj.connect(signal, func)
+            obj._callbacks[signal] = hid
+
+    ##########
+
     def keypress(self, widget, event):
         if event.keyval == Gdk.KEY_Escape:
             Gtk.main_quit()
