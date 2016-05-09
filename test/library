@@ -94,6 +94,23 @@ aaaa
 EOF
 test_expect_equal_file OUTPUT EXPECTED
 
+test_begin_subtest "add accented context"
+python3 - <<EOF | sed "s|$ASSWORD_DB|ASSWORD_DB|" >OUTPUT
+import assword
+db = assword.Database("$ASSWORD_DB", '$ASSWORD_KEYID')
+db.add('això')
+print('això' in db)
+for e in sorted(db):
+  print(e)
+db.save()
+EOF
+cat <<EOF >EXPECTED
+True
+aaaa
+això
+EOF
+test_expect_equal_file OUTPUT EXPECTED
+
 ################################################################
 
 test_done

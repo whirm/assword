@@ -2,6 +2,7 @@
 # test_declare_external_prereq python
 # test_declare_external_prereq python2
 
+export LC_ALL=C.UTF-8
 export SRC_DIRECTORY=$(cd "$TEST_DIRECTORY"/.. && pwd)
 export PATH="$SRC_DIRECTORY":$PATH
 export PYTHONPATH="$SRC_DIRECTORY":$PYTHONPATH
