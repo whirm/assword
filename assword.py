@@ -299,7 +299,7 @@ class Gui:
             liststore.append([context])
         hbox = Gtk.HBox()
         vbox = Gtk.VBox()
-        self.createbutton = Gtk.Button("Create")
+        self.button = Gtk.Button("Create")
         self.label = Gtk.Label(label="enter context for desired password:")
         self.window.add(vbox)
 
@@ -318,11 +318,11 @@ class Gui:
         vbox.add(self.label)
         vbox.pack_end(hbox, False, False, 0)
         hbox.add(self.entry)
-        hbox.pack_end(self.createbutton, False, False, 0)
+        hbox.pack_end(self.button, False, False, 0)
         self.entry.set_width_chars(context_len)
-        self.entry.connect("activate", self.enter)
-        self.entry.connect("changed", self.updatecreate)
-        self.createbutton.connect("clicked", self.create)
+        self.entry.connect("activate", self.retrieve)
+        self.entry.connect("changed", self.update_button)
+        self.button.connect("clicked", self.create)
         self.window.connect("destroy", self.destroy)
         self.window.connect("key-press-event", self.keypress)
     
@@ -330,19 +330,19 @@ class Gui:
         self.label.show()
         vbox.show()
         hbox.show()
-        self.createbutton.show()
-        self.updatecreate(self.entry)
+        self.button.show()
+        self.update_button(self.entry)
         self.window.show()
 
     def keypress(self, widget, event):
         if event.keyval == Gdk.KEY_Escape:
             Gtk.main_quit()
 
-    def updatecreate(self, widget, data=None):
+    def update_button(self, widget, data=None):
         e = self.entry.get_text()
-        self.createbutton.set_sensitive(e != '' and e not in self.db)
+        self.button.set_sensitive(e != '' and e not in self.db)
 
-    def enter(self, widget, data=None):
+    def retrieve(self, widget, data=None):
         e = self.entry.get_text()
         if e in self.db:
             self.selected = self.db[e]
