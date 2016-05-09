@@ -3,7 +3,7 @@ import io
 import gpgme
 import json
 import time
-import base64
+import codecs
 import datetime
 import gi
 gi.require_version('Gtk', '3.0')
@@ -13,12 +13,14 @@ from gi.repository import Gdk
 
 ############################################################
 
-DEFAULT_NEW_PASSWORD_OCTETS=18
+DEFAULT_NEW_PASSWORD_OCTETS = 18
 
 def pwgen(nbytes):
     """Return *nbytes* bytes of random data, base64-encoded."""
     s = os.urandom(nbytes)
-    return base64.b64encode(s)
+    b = codecs.encode(s, 'base64')
+    b = bytes(filter(lambda x: x not in b'=\n', b))
+    return codecs.decode(b, 'ascii')
 
 ############################################################
 
@@ -57,7 +59,7 @@ class Database():
             try:
                 cleardata = self._decryptDB(self._dbpath)
                 # FIXME: trap exception if json corrupt
-                jsondata = json.loads(cleardata.getvalue())
+                jsondata = json.loads(cleardata.getvalue().decode('utf-8'))
             except IOError as e:
                 raise DatabaseError(e)
             except gpgme.GpgmeError as e:
@@ -215,11 +217,11 @@ class Database():
         jsondata = {'type': self._type,
                     'version': self._version,
                     'entries': self._entries}
-        cleardata = io.BytesIO(json.dumps(jsondata, indent=2))
+        cleardata = io.BytesIO(json.dumps(jsondata, indent=2).encode('utf-8'))
         encdata = self._encryptDB(cleardata, keyid)
         newpath = path + '.new'
         bakpath = path + '.bak'
-        with open(newpath, 'w') as f:
+        with open(newpath, 'wb') as f:
             f.write(encdata.getvalue())
         if os.path.exists(path):
             os.rename(path, bakpath)
@@ -232,7 +234,7 @@ class Database():
 
         """
         mset = {}
-        for context, entry in self._entries.iteritems():
+        for context, entry in self._entries.items():
             # simple substring match
             if query in context:
                 mset[context] = entry
@@ -273,7 +275,7 @@ class Gui:
             # GUI, return the initialization immediately.
             # See .returnValue().
             if len(r) == 1:
-                self.selected = r[r.keys()[0]]
+                self.selected = r[list(r.keys())[0]]
                 return
 
         self.window = Gtk.Window(Gtk.WindowType.TOPLEVEL)

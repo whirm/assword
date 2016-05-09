@@ -16,7 +16,7 @@ setup(
         'getpass',
         'json',
         'base64',
-        'gtk2',
+        'gi',
         'pkg_resources',
         ],
     )

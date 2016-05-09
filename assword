@@ -1,24 +1,25 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os
 import sys
-import getpass
 import json
 import gpgme
-import assword
+import getpass
 import subprocess
 import pkg_resources
+
+import assword
 
 ############################################################
 
 PROG = os.path.basename(sys.argv[0])
 
 def version():
-    print PROG, pkg_resources.get_distribution('assword').version
+    print(PROG, pkg_resources.get_distribution('assword').version)
 
 def usage():
-    print "Usage:", PROG, "<command> [<args>...]"
-    print """
+    print("Usage:", PROG, "<command> [<args>...]")
+    print("""
 
 The password database is stored as a single json object, OpenPGP
 encrypted and signed, and written to local disk (see ASSWORD_DB).  The
@@ -84,7 +85,7 @@ Environment:
                     attempts to type the password into the window that had
                     focus on launch, or 'xclip' which inserts the password in
                     the X clipboard.  Default: xdo
-"""%(assword.DEFAULT_NEW_PASSWORD_OCTETS)
+"""%(assword.DEFAULT_NEW_PASSWORD_OCTETS))
 
 ############################################################
 
@@ -98,7 +99,7 @@ def xclip(text):
     p = subprocess.Popen(' '.join(["xclip", "-i"]),
                          shell=True,
                          stdin=subprocess.PIPE)
-    p.communicate(text)
+    p.communicate(text.encode('utf-8'))
 
 ############################################################
 # Return codes:
@@ -111,10 +112,10 @@ def open_db(keyid=None):
     try:
         db = assword.Database(DBPATH, keyid)
     except assword.DatabaseError as e:
-        print >>sys.stderr, 'Assword database error: %s' % e.msg
+        print('Assword database error: %s' % e.msg, file=sys.stderr)
         sys.exit(10)
     if db.sigvalid is False:
-        print >>sys.stderr, "WARNING: could not validate OpenPGP signature on db file."
+        print("WARNING: could not validate OpenPGP signature on db file.", file=sys.stderr)
     return db
 
 def get_keyid():
@@ -127,10 +128,10 @@ def get_keyid():
 
     save = False
     if not keyid:
-        print >>sys.stderr, "OpenPGP key ID of encryption target not specified."
-        print >>sys.stderr, "Please provide key ID in ASSWORD_KEYID environment variable,"
-        print >>sys.stderr, "or specify key ID now to save in ~/.assword/keyid file."
-        keyid = raw_input('OpenPGP key ID: ')
+        print("OpenPGP key ID of encryption target not specified.", file=sys.stderr)
+        print("Please provide key ID in ASSWORD_KEYID environment variable,", file=sys.stderr)
+        print("or specify key ID now to save in ~/.assword/keyid file.", file=sys.stderr)
+        keyid = input('OpenPGP key ID: ')
         if keyid == '':
             keyid = None
         else:
@@ -143,8 +144,8 @@ def get_keyid():
         gpg = gpgme.Context()
         gpg.get_key(keyid)
     except gpgme.GpgmeError as e:
-        print >>sys.stderr, "GPGME error for key ID %s:" % keyid
-        print >>sys.stderr, "  %s" % e
+        print("GPGME error for key ID %s:" % keyid, file=sys.stderr)
+        print("  %s" % e, file=sys.stderr)
         sys.exit(20)
 
     if save:
@@ -165,7 +166,7 @@ def retrieve_context(args):
     # prompt for context if not specified
     except IndexError:
         try:
-            context = raw_input('context: ')
+            context = input('context: ')
         except KeyboardInterrupt:
             sys.exit(-1)
     if context == '':
@@ -181,7 +182,7 @@ def retrieve_password():
             octets = int(os.getenv('ASSWORD_PASSWORD'))
         except ValueError:
             sys.exit("ASSWORD_PASSWORD environment variable is neither int or 'prompt'.")
-        print >>sys.stderr, "Auto-generating password..."
+        print("Auto-generating password...", file=sys.stderr)
         return octets
     try:
         password0 = getpass.getpass('password: ')
@@ -202,16 +203,16 @@ def add(args):
     context = retrieve_context(args)
     db = open_db(keyid)
     if context in db:
-        print >>sys.stderr, "Entry already exists with context: '%s'" % (context)
+        print("Entry already exists with context: '%s'" % (context), file=sys.stderr)
         sys.exit(1)
     password = retrieve_password()
     try:
         db.add(context.strip(), password)
         db.save()
     except assword.DatabaseError as e:
-        print >>sys.stderr, 'Assword database error: %s' % e.msg
+        print('Assword database error: %s' % e.msg, file=sys.stderr)
         sys.exit(10)
-    print >>sys.stderr, "New entry writen."
+    print("New entry writen.", file=sys.stderr)
 
 # Replace a password in the database.
 # First argument is context to replace.
@@ -220,23 +221,23 @@ def replace(args):
     context = retrieve_context(args)
     db = open_db(keyid)
     if context not in db:
-        print >>sys.stderr, "Context not found: '%s'" % (context)
+        print("Context not found: '%s'" % (context), file=sys.stderr)
         sys.exit(1)
     password = retrieve_password()
     try:
         db.replace(context.strip(), password)
         db.save()
     except assword.DatabaseError as e:
-        print >>sys.stderr, 'Assword database error: %s' % e.msg
+        print('Assword database error: %s' % e.msg, file=sys.stderr)
         sys.exit(10)
-    print >>sys.stderr, "New entry writen."
+    print("New entry writen.", file=sys.stderr)
 
 def dump(args):
     query = ' '.join(args)
     if not os.path.exists(DBPATH):
-        print >>sys.stderr, """Assword database does not exist.
+        print("""Assword database does not exist.
 To add an entry to the database use 'assword add'.
-See 'assword help' for more information."""
+See 'assword help' for more information.""", file=sys.stderr)
         sys.exit(10)
     db = open_db()
     results = db.search(query)
@@ -246,7 +247,7 @@ See 'assword help' for more information."""
         output[context]['date'] = results[context]['date']
         if os.getenv('ASSWORD_DUMP_PASSWORDS'):
             output[context]['password'] = results[context]['password']
-    print json.dumps(output, sort_keys=True, indent=2)
+    print(json.dumps(output, sort_keys=True, indent=2))
 
 # The X GUI
 def gui(args, method='xdo'):
@@ -255,8 +256,8 @@ def gui(args, method='xdo'):
         try:
             import xdo
         except:
-            print >>sys.stderr, "The xdo module is not found, so the 'xdo' paste method is not available."
-            print >>sys.stderr, "Please install python-xdo."
+            print("The xdo module is not found, so the 'xdo' paste method is not available.", file=sys.stderr)
+            print("Please install python-xdo.", file=sys.stderr)
             sys.exit(1)
         # initialize xdo
         x = xdo.xdo()
@@ -265,7 +266,7 @@ def gui(args, method='xdo'):
     elif method == 'xclip':
         pass
     else:
-        print >>sys.stderr, "Unknown X paste method:", method
+        print("Unknown X paste method:", method, file=sys.stderr)
         sys.exit(1)
     # do it
     keyid = get_keyid()
@@ -285,15 +286,15 @@ def remove(args):
     try:
         context = args[0]
     except IndexError:
-        print >>sys.stderr, "Must specify index to remove."
+        print("Must specify index to remove.", file=sys.stderr)
         sys.exit(1)
     db = open_db(keyid)
     if context not in db:
-        print >>sys.stderr, "No entry with context: '%s'" % (context)
+        print("No entry with context: '%s'" % (context), file=sys.stderr)
         sys.exit(1)
     try:
-        print >>sys.stderr, "Really remove entry '%s'?" % (context)
-        response = raw_input("Type 'yes' to remove: ")
+        print("Really remove entry '%s'?" % (context), file=sys.stderr)
+        response = input("Type 'yes' to remove: ")
     except KeyboardInterrupt:
         sys.exit(-1)
     if response != 'yes':
@@ -302,15 +303,15 @@ def remove(args):
         db.remove(context)
         db.save()
     except assword.DatabaseError as e:
-        print >>sys.stderr, 'Assword database error: %s' % e.msg
+        print('Assword database error: %s' % e.msg, file=sys.stderr)
         sys.exit(10)
-    print >>sys.stderr, "Entry removed."
+    print("Entry removed.", file=sys.stderr)
 
 ############################################################
 # main
 
 if len(sys.argv) < 2:
-    print >>sys.stderr, "Command not specified."
+    print("Command not specified.", file=sys.stderr)
     usage()
     sys.exit(1)
 
@@ -332,7 +333,7 @@ elif cmd == 'version' or cmd == '--version':
 elif cmd == 'help' or cmd == '--help':
     usage()
 else:
-    print >>sys.stderr, "Unknown command:", cmd
-    print >>sys.stderr
+    print("Unknown command:", cmd, file=sys.stderr)
+    print(file=sys.stderr)
     usage()
     sys.exit(1)
