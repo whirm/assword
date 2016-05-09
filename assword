@@ -112,7 +112,7 @@ def open_db(keyid=None):
     try:
         db = assword.Database(DBPATH, keyid)
     except assword.DatabaseError as e:
-        print('Assword database error: %s' % e.msg, file=sys.stderr)
+        print('Assword database error: %s' % (e.msg), file=sys.stderr)
         sys.exit(10)
     if db.sigvalid is False:
         print("WARNING: could not validate OpenPGP signature on db file.", file=sys.stderr)
@@ -144,8 +144,8 @@ def get_keyid():
         gpg = gpgme.Context()
         gpg.get_key(keyid)
     except gpgme.GpgmeError as e:
-        print("GPGME error for key ID %s:" % keyid, file=sys.stderr)
-        print("  %s" % e, file=sys.stderr)
+        print("GPGME error for key ID %s:" % (keyid), file=sys.stderr)
+        print("  %s" % (e), file=sys.stderr)
         sys.exit(20)
 
     if save:
@@ -210,7 +210,7 @@ def add(args):
         db.add(context.strip(), password)
         db.save()
     except assword.DatabaseError as e:
-        print('Assword database error: %s' % e.msg, file=sys.stderr)
+        print('Assword database error: %s' % (e.msg), file=sys.stderr)
         sys.exit(10)
     print("New entry writen.", file=sys.stderr)
 
@@ -228,7 +228,7 @@ def replace(args):
         db.replace(context.strip(), password)
         db.save()
     except assword.DatabaseError as e:
-        print('Assword database error: %s' % e.msg, file=sys.stderr)
+        print('Assword database error: %s' % (e.msg), file=sys.stderr)
         sys.exit(10)
     print("New entry writen.", file=sys.stderr)
 
@@ -303,7 +303,7 @@ def remove(args):
         db.remove(context)
         db.save()
     except assword.DatabaseError as e:
-        print('Assword database error: %s' % e.msg, file=sys.stderr)
+        print('Assword database error: %s' % (e.msg), file=sys.stderr)
         sys.exit(10)
     print("Entry removed.", file=sys.stderr)
 
