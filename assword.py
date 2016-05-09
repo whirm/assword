@@ -5,10 +5,11 @@ import json
 import time
 import base64
 import datetime
-import pygtk
-pygtk.require('2.0')
-import gtk
-import gobject
+import gi
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk
+from gi.repository import GObject
+from gi.repository import Gdk
 
 ############################################################
 
@@ -275,47 +276,47 @@ class Gui:
                 self.selected = r[r.keys()[0]]
                 return
 
-        self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        self.window = Gtk.Window(Gtk.WindowType.TOPLEVEL)
         self.window.set_border_width(4)
-        windowicon = self.window.render_icon(gtk.STOCK_DIALOG_AUTHENTICATION, gtk.ICON_SIZE_DIALOG)
+        windowicon = self.window.render_icon(Gtk.STOCK_DIALOG_AUTHENTICATION, Gtk.IconSize.DIALOG)
         self.window.set_icon(windowicon)
 
-        self.entry = gtk.Entry()
+        self.entry = Gtk.Entry()
         if query:
             self.entry.set_text(query)
-        completion = gtk.EntryCompletion()
+        completion = Gtk.EntryCompletion()
         self.entry.set_completion(completion)
-        liststore = gtk.ListStore(gobject.TYPE_STRING)
+        liststore = Gtk.ListStore(GObject.TYPE_STRING)
         completion.set_model(liststore)
         completion.set_text_column(0)
         completion.set_match_func(_match_func, 0) # 0 is column number
-        context_len = 20
+        context_len = 50
         for context in self.db:
             if len(context) > context_len:
                 context_len = len(context)
             liststore.append([context])
-        hbox = gtk.HBox()
-        vbox = gtk.VBox()
-        self.createbutton = gtk.Button("Create")
-        self.label = gtk.Label("enter context for desired password:")
+        hbox = Gtk.HBox()
+        vbox = Gtk.VBox()
+        self.createbutton = Gtk.Button("Create")
+        self.label = Gtk.Label(label="enter context for desired password:")
         self.window.add(vbox)
 
         if self.db.sigvalid is False:
-            notification = gtk.Label()
+            notification = Gtk.Label()
             msg = "WARNING: could not validate signature on db file"
             notification.set_markup('<span foreground="red">%s</span>' % msg)
             if len(msg) > context_len:
                 context_len = len(msg)
-            hsep = gtk.HSeparator()
+            hsep = Gtk.HSeparator()
             vbox.add(notification)
             vbox.add(hsep)
             notification.show()
             hsep.show()
 
         vbox.add(self.label)
-        vbox.pack_end(hbox, False, False)
+        vbox.pack_end(hbox, False, False, 0)
         hbox.add(self.entry)
-        hbox.pack_end(self.createbutton, False, False)
+        hbox.pack_end(self.createbutton, False, False, 0)
         self.entry.set_width_chars(context_len)
         self.entry.connect("activate", self.enter)
         self.entry.connect("changed", self.updatecreate)
@@ -332,8 +333,8 @@ class Gui:
         self.window.show()
 
     def keypress(self, widget, event):
-        if event.keyval == gtk.keysyms.Escape:
-            gtk.main_quit()
+        if event.keyval == Gdk.KEY_Escape:
+            Gtk.main_quit()
 
     def updatecreate(self, widget, data=None):
         e = self.entry.get_text()
@@ -346,7 +347,7 @@ class Gui:
             if self.selected is None:
                 self.label.set_text("weird -- no context found even though we thought there should be one")
             else:
-                gtk.main_quit()
+                Gtk.main_quit()
         else:
             self.label.set_text("no match")
 
@@ -354,12 +355,12 @@ class Gui:
         e = self.entry.get_text()
         self.selected = self.db.add(e)
         self.db.save()
-        gtk.main_quit()
+        Gtk.main_quit()
 
     def destroy(self, widget, data=None):
-        gtk.main_quit()
+        Gtk.main_quit()
 
     def returnValue(self):
         if self.selected is None:
-            gtk.main()
+            Gtk.main()
         return self.selected
