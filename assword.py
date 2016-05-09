@@ -320,9 +320,11 @@ class Gui:
         hbox.add(self.entry)
         hbox.pack_end(self.button, False, False, 0)
         self.entry.set_width_chars(context_len)
-        self.entry.connect("activate", self.retrieve)
-        self.entry.connect("changed", self.update_button)
-        self.button.connect("clicked", self.create)
+
+        self.reset_signal(self.entry, "activate", self.retrieve)
+        self.reset_signal(self.entry, "changed", self.update_button)
+        self.reset_signal(self.button, "clicked", self.create)
+
         self.window.connect("destroy", self.destroy)
         self.window.connect("key-press-event", self.keypress)
     
@@ -357,7 +359,16 @@ class Gui:
 
     def update_button(self, widget, data=None):
         e = self.entry.get_text()
-        self.button.set_sensitive(e != '' and e not in self.db)
+        if e == '':
+            self.button.set_sensitive(False)
+        elif e in self.db:
+            self.button.set_label('Replace')
+            self.reset_signal(self.button, "clicked", self.stage_for_replace)
+            self.button.set_sensitive(True)
+        else:
+            self.button.set_label('Create')
+            self.reset_signal(self.button, "clicked", self.create)
+            self.button.set_sensitive(True)
 
     def retrieve(self, widget, data=None):
         e = self.entry.get_text()
@@ -373,6 +384,30 @@ class Gui:
     def create(self, widget, data=None):
         e = self.entry.get_text()
         self.selected = self.db.add(e)
+        self.db.save()
+        Gtk.main_quit()
+
+    def stage_for_replace(self, widget, data=None):
+        self._replace_context = self.entry.get_text()
+        self.label.set_text("enter new password for context '%s' (or Reset to generate new random):" % self._replace_context)
+        self.reset_signal(self.entry, "activate", self.replace)
+        self.reset_signal(self.entry, "changed")
+        self.entry.set_completion(None)
+        self.button.set_label('Reset')
+        self.reset_signal(self.button, "clicked", self.reset)
+        self.button.set_sensitive(True)
+        self.entry.set_text('')
+        # FIXME: the entry should use dots to hide entered text (or at least be a different color)
+        # FIXME: how to make the entry now active?
+
+    def replace(self, widget, data=None):
+        password = self.entry.get_text()
+        self.selected = self.db.replace(self._replace_context, password)
+        self.db.save()
+        Gtk.main_quit()
+
+    def reset(self, widget, data=None):
+        self.selected = self.db.replace(self._replace_context)
         self.db.save()
         Gtk.main_quit()
 
