@@ -309,30 +309,35 @@ def remove(args):
 ############################################################
 # main
 
-if len(sys.argv) < 2:
-    print("Command not specified.", file=sys.stderr)
-    usage()
-    sys.exit(1)
+def main():
+    if len(sys.argv) < 2:
+        print("Command not specified.", file=sys.stderr)
+        usage()
+        sys.exit(1)
 
-cmd = sys.argv[1]
+    cmd = sys.argv[1]
 
-if cmd == 'add':
-    add(sys.argv[2:])
-elif cmd == 'replace':
-    replace(sys.argv[2:])
-elif cmd == 'dump':
-    dump(sys.argv[2:])
-elif cmd == 'gui':
-    method = os.getenv('ASSWORD_XPASTE', 'xdo')
-    gui(sys.argv[2:], method=method)
-elif cmd == 'remove':
-    remove(sys.argv[2:])
-elif cmd == 'version' or cmd == '--version':
-    version()
-elif cmd == 'help' or cmd == '--help':
-    usage()
-else:
-    print("Unknown command:", cmd, file=sys.stderr)
-    print(file=sys.stderr)
-    usage()
-    sys.exit(1)
+    if cmd == 'add':
+        add(sys.argv[2:])
+    elif cmd == 'replace':
+        replace(sys.argv[2:])
+    elif cmd == 'dump':
+        dump(sys.argv[2:])
+    elif cmd == 'gui':
+        method = os.getenv('ASSWORD_XPASTE', 'xdo')
+        gui(sys.argv[2:], method=method)
+    elif cmd == 'remove':
+        remove(sys.argv[2:])
+    elif cmd == 'version' or cmd == '--version':
+        version()
+    elif cmd == 'help' or cmd == '--help':
+        print
+        usage()
+    else:
+        print("Unknown command:", cmd, file=sys.stderr)
+        print(file=sys.stderr)
+        usage()
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
