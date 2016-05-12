@@ -1,7 +1,9 @@
 #!/usr/bin/make -f
 
+export PYBUILD_NAME = assword
+
 %:
-	dh $@ --with python3 --buildsystem=python_distutils
+	dh $@ --with python3 --buildsystem pybuild
 override_dh_installman:
 	make assword.1
 	dh_installman
