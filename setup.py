@@ -4,7 +4,7 @@ from distutils.core import setup
 
 setup(
     name = 'assword',
-    version = '0.8',
+    version = '0.9',
     description = 'Secure password management and retrieval system.',
     author = 'Jameson Rollins',
     author_email = 'jrollins@finestructure.net',
