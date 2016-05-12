@@ -39,11 +39,8 @@ setup(
         'Operating System :: POSIX',
         'Programming Language :: Python :: 3 :: Only'],
     install_requires = [
-        'gpgme',
-        'getpass',
-        'json',
-        'base64',
-        'gi',
+        'pygpgme',
+        'PyGobject',
         ],
     # You can install this optional dependency using the following syntax:
     # $ pip install -e .xdo

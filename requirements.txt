@@ -1,6 +1,3 @@
-gpgme
-getpass
-json
-base64
-gi
+pygpgme
+PyGobject
 xdo
