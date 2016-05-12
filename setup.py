@@ -8,7 +8,7 @@ setup(
     description = 'Secure password management and retrieval system.',
     author = 'Jameson Rollins',
     author_email = 'jrollins@finestructure.net',
-    url = 'http://finestructure.net/assword',
+    url = 'https://finestructure.net/assword',
     py_modules = ['assword'],
     scripts = ['assword'],
     requires = [

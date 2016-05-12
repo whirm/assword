@@ -59,7 +59,7 @@ Recommends (for curses UI) :
 Debian
 ------
 
-Assword is now available in Debian: http://packages.qa.debian.org/assword
+Assword is now available in Debian: https://packages.qa.debian.org/assword
 
 Debian/Ubuntu snapshot packages can also be easily made from the git
 source.  You can build the package from any branch but it requires an

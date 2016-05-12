@@ -12,7 +12,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see http://www.gnu.org/licenses/ .
+# along with this program.  If not, see https://www.gnu.org/licenses/ .
 #
 # Modified 2012 Jameson Rollins <jameson.rollins@ligo.org>
 #   for use by aLIGO Guardian
