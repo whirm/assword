@@ -1,0 +1,6 @@
+gpgme
+getpass
+json
+base64
+gi
+xdo
