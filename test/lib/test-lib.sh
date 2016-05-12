@@ -304,8 +304,8 @@ test_expect_equal_file ()
 # canonicalized before diff'ing.  If an argument cannot be parsed, it
 # is used unchanged so that there's something to diff against.
 test_expect_equal_json () {
-    output=$(echo "$1" | python -mjson.tool || echo "$1")
-    expected=$(echo "$2" | python -mjson.tool || echo "$2")
+    output=$(echo "$1" | python3 -mjson.tool || echo "$1")
+    expected=$(echo "$2" | python3 -mjson.tool || echo "$2")
     shift 2
     test_expect_equal "$output" "$expected" "$@"
 }
@@ -654,7 +654,7 @@ test_done () {
 
 test_python() {
 	(echo "import sys; _orig_stdout=sys.stdout; sys.stdout=open('OUTPUT', 'w')"; cat) \
-		| python -
+		| python3 -
 }
 
 test_reset_state_ () {

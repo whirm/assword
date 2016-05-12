@@ -24,7 +24,7 @@ EOF
 test_expect_equal_file OUTPUT EXPECTED
 
 test_begin_subtest "decrypt db"
-python - <<EOF | sed "s|$ASSWORD_DB|ASSWORD_DB|" >OUTPUT
+python3 - <<EOF | sed "s|$ASSWORD_DB|ASSWORD_DB|" >OUTPUT
 import assword
 db = assword.Database("$ASSWORD_DB")
 print(db)
@@ -39,7 +39,7 @@ EOF
 test_expect_equal_file OUTPUT EXPECTED
 
 test_begin_subtest "add second entry"
-python - <<EOF | sed "s|$ASSWORD_DB|ASSWORD_DB|" >OUTPUT
+python3 - <<EOF | sed "s|$ASSWORD_DB|ASSWORD_DB|" >OUTPUT
 import assword
 db = assword.Database("$ASSWORD_DB", '$ASSWORD_KEYID')
 db.add('aaaa')

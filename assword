@@ -257,7 +257,7 @@ def gui(args, method='xdo'):
             import xdo
         except:
             print("The xdo module is not found, so the 'xdo' paste method is not available.", file=sys.stderr)
-            print("Please install python-xdo.", file=sys.stderr)
+            print("Please install python3-xdo.", file=sys.stderr)
             sys.exit(1)
         # initialize xdo
         x = xdo.xdo()
