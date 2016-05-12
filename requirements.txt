@@ -1,0 +1,3 @@
+pygpgme
+PyGobject
+xdo

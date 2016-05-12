@@ -24,7 +24,7 @@ cat <<EOF >EXPECTED
 {
   "baz asdf Dokw okb 32438uoijdf": {
     FOO
-  }, 
+  },
   "foo@bar": {
     FOO
   }
@@ -60,7 +60,7 @@ cat <<EOF >EXPECTED
 {
   "baz asdf Dokw okb 32438uoijdf": {
     FOO
-  }, 
+  },
   "foo@bar": {
     FOO
   }

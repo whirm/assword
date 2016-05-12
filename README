@@ -47,19 +47,19 @@ Clone the repo:
     $ cd assword
 
 Dependencies :
-  * python (>= 2.6)
-  * python-gpgme - Python wrapper for the GPGME library
-  * python-gtk2 - Python bindings for the GTK+ widget set
-  * python-pkg-resources - Package Discovery and Resource Access
+  * python3
+  * python3-gpgme - Python wrapper for the GPGME library
+  * python3-gtk2 - Python bindings for the GTK+ widget set
+  * python3-pkg-resources - Package Discovery and Resource Access
 
 Recommends (for curses UI) :
-  * python-xdo - Support for simulating X11 input (libxdo bindings)
+  * python3-xdo - Support for simulating X11 input (libxdo bindings)
   * xclip - Support for accessing X11 clipboard
 
 Debian
 ------
 
-Assword is now available in Debian: http://packages.qa.debian.org/assword
+Assword is now available in Debian: https://packages.qa.debian.org/assword
 
 Debian/Ubuntu snapshot packages can also be easily made from the git
 source.  You can build the package from any branch but it requires an
@@ -69,9 +69,9 @@ up-to-date local branch of origin/debian, e.g.:
 
 Then:
 
-    $ sudo apt-get install build-essential devscripts pkg-config python-all-dev python-setuptools debhelper dpkg-dev fakeroot
+    $ sudo apt-get install build-essential devscripts pkg-config python3-all-dev python3-setuptools debhelper dpkg-dev fakeroot
     $ make debian-snapshot
-    $ sudo apt-get install python-gpgme python-gtk2 python-pkg-resources python-xdo xclip
+    $ sudo apt-get install python3-gpgme python3-gi python3-pkg-resources python3-xdo xclip
     $ sudo dpkg -i build/assword_0.*_amd64.deb
 
 
