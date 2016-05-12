@@ -4,25 +4,25 @@ Priority: optional
 Maintainer: Jameson Graef Rollins <jrollins@finestructure.net>
 Uploaders: Daniel Kahn Gillmor <dkg@fifthhorseman.net>
 Build-Depends: debhelper (>= 9),
+               dh-python,
                help2man,
                pkg-config,
-               python,
-               python-gpgme,
-               python-gtk2,
-               python-setuptools
+               python3,
+               python3-gi,
+               python3-gpgme,
+               python3-setuptools
 Standards-Version: 3.9.6
 Homepage: https://finestructure.net/assword
 Vcs-Git: git://finestructure.net/assword
 
 Package: assword
 Architecture: all
-Depends: python-gpgme,
-         python-gtk2,
-         python-pkg-resources,
+Depends: python3-gi,
+         python3-gpgme,
          ${misc:Depends},
-         ${python:Depends},
+         ${python3:Depends},
          ${shlibs:Depends}
-Recommends: python-xdo, xclip
+Recommends: python3-xdo, xclip
 Description: Simple and secure password management and retrieval system.
  Assword is a secure password manager that relies on your OpenPGP key
  for security and is designed to integrate in a minimal fashion into
