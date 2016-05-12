@@ -11,6 +11,7 @@ from gi.repository import Gtk
 from gi.repository import GObject
 from gi.repository import Gdk
 
+from . import version
 ############################################################
 
 DEFAULT_NEW_PASSWORD_OCTETS = 18

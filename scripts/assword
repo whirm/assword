@@ -6,7 +6,6 @@ import json
 import gpgme
 import getpass
 import subprocess
-import pkg_resources
 
 import assword
 
@@ -15,7 +14,7 @@ import assword
 PROG = os.path.basename(sys.argv[0])
 
 def version():
-    print(PROG, pkg_resources.get_distribution('assword').version)
+    print(assword.version.__version__)
 
 def usage():
     print("Usage:", PROG, "<command> [<args>...]")

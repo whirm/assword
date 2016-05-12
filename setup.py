@@ -2,9 +2,13 @@
 
 from distutils.core import setup
 
+version = {}
+with open("assword/version.py") as f:
+    exec(f.read(), version)
+
 setup(
     name = 'assword',
-    version = '0.9',
+    version = version['__version__'],
     description = 'Secure password management and retrieval system.',
     author = 'Jameson Rollins',
     author_email = 'jrollins@finestructure.net',
@@ -17,6 +21,5 @@ setup(
         'json',
         'base64',
         'gi',
-        'pkg_resources',
         ],
     )
