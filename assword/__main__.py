@@ -311,6 +311,7 @@ def remove(args):
 def main():
     if len(sys.argv) < 2:
         print("Command not specified.", file=sys.stderr)
+        print(file=sys.stderr)
         usage()
         sys.exit(1)
 
