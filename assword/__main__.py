@@ -11,15 +11,14 @@ import assword
 
 ############################################################
 
-PROG = os.path.basename(sys.argv[0])
+PROG = 'assword'
 
 def version():
-    print(assword.version.__version__)
+    print(assword.__version__)
 
 def usage():
     print("Usage:", PROG, "<command> [<args>...]")
     print("""
-
 The password database is stored as a single json object, OpenPGP
 encrypted and signed, and written to local disk (see ASSWORD_DB).  The
 file will be created upon addition of the first entry.  Database
@@ -312,6 +311,7 @@ def remove(args):
 def main():
     if len(sys.argv) < 2:
         print("Command not specified.", file=sys.stderr)
+        print(file=sys.stderr)
         usage()
         sys.exit(1)
 

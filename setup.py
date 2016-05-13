@@ -21,8 +21,8 @@ with open("assword/version.py") as f:
 setup(
     name = 'assword',
     version = version['__version__'],
-    description = 'Secure password management and retrieval system.',
-    long_description=long_description,
+    description = 'Simple and secure password management system.',
+    long_description = long_description,
     author = 'Jameson Rollins',
     author_email = 'jrollins@finestructure.net',
     url = 'https://finestructure.net/assword',
@@ -47,9 +47,11 @@ setup(
     extras_require={
         'xdo': ['xdo'],
     },
+    # https://chriswarrick.com/blog/2014/09/15/python-apps-the-right-way-entry_points-and-scripts/
+    # should we have a 'gui_scripts' as well?
     entry_points={
         'console_scripts': [
-            'assword=assword.cli:main',
+            'assword = assword.__main__:main',
         ],
     },
 )

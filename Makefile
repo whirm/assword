@@ -11,7 +11,9 @@ test:
 	./test/assword-test $(TEST_OPTS)
 
 assword.1: assword
-	PYTHONPATH=$(shell pwd) help2man ./assword/cli.py -N -n 'Simple and secure password database and retrieval system' \
+	alias assword="python3 -m assword"; \
+	help2man assword \
+	-N -n 'Simple and secure password management system' \
 	--include=assword.1.additional \
 	-o $@
 
