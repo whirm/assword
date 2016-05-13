@@ -14,7 +14,7 @@ import assword
 PROG = 'assword'
 
 def version():
-    print(assword.version.__version__)
+    print(assword.__version__)
 
 def usage():
     print("Usage:", PROG, "<command> [<args>...]")
