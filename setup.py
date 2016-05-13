@@ -21,8 +21,8 @@ with open("assword/version.py") as f:
 setup(
     name = 'assword',
     version = version['__version__'],
-    description = 'Secure password management and retrieval system.',
-    long_description=long_description,
+    description = 'Simple and secure password management system.',
+    long_description = long_description,
     author = 'Jameson Rollins',
     author_email = 'jrollins@finestructure.net',
     url = 'https://finestructure.net/assword',
