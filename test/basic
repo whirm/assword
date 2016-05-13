@@ -71,6 +71,11 @@ rm $TEST_DIRECTORY/test-results/test-verbose-*
 rm -r $TEST_DIRECTORY/tmp.test-verbose
 test_expect_equal "$output" "$expected"
 
+test_begin_subtest "Ensure that we're looking at the correct library"
+output=$(python3 -c 'import assword; print(assword.__file__)')
+expected="${SRC_DIRECTORY}/assword/__init__.py"
+test_expect_equal "$output" "$expected"
+
 ################################################################
 
 test_done
