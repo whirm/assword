@@ -47,9 +47,11 @@ setup(
     extras_require={
         'xdo': ['xdo'],
     },
+    # https://chriswarrick.com/blog/2014/09/15/python-apps-the-right-way-entry_points-and-scripts/
+    # should we have a 'gui_scripts' as well?
     entry_points={
         'console_scripts': [
-            'assword=assword.cli:main',
+            'assword = assword.__main__:main',
         ],
     },
 )
